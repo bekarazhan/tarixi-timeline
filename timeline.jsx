@@ -335,7 +335,9 @@ function Timeline({
     const x1 = scale.yearToX(s);
     const x2 = scale.yearToX(e);
     const yBase = itemY(item) + scrollY;
-    const color = window.colorForItem(item, colorLogic);
+    // Два цвета: область (заливка) + место (вторичный элемент)
+    const domainColor = window.colorForItem(item, 'primary');
+    const placeColor  = window.colorForItem(item, 'place');
     const isSelected = selected && selected.id === item.id;
     const isDim = selected && selected.id !== item.id;
 
@@ -349,7 +351,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-era ${isSelected ? 'selected' : ''}`}
-          style={{ left: x1, top: yBase, width: w, '--c': color }}
+          style={{ left: x1, top: yBase, width: w, '--c': domainColor, '--pc': placeColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
@@ -365,7 +367,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-subject ${isSelected ? 'selected' : ''}`}
-          style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': color }}
+          style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': domainColor, '--pc': placeColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
@@ -383,9 +385,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-event ${isSelected ? 'selected' : ''}`}
-          style={{
-            left: x1, top: yBase, height: ROW, '--c': color,
-          }}
+          style={{ left: x1, top: yBase, height: ROW, '--c': domainColor, '--pc': placeColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}

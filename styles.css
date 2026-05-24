@@ -489,6 +489,29 @@ button { font-family: inherit; }
 .legend-divider {
   height: 1px; background: var(--line); margin: 4px 0;
 }
+/* ----- legend encoding hint ----- */
+.legend-encoding-hint {
+  display: flex; gap: 10px;
+  margin: 4px 0 8px;
+  font-size: 10px; color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+.legend-encoding-hint span { display: flex; align-items: center; gap: 4px; }
+.legend-encoding-swatch {
+  display: inline-block;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-encoding-swatch.domain {
+  width: 10px; height: 4px; border-radius: 2px;
+  background: var(--text-2);
+}
+.legend-encoding-swatch.place {
+  width: 7px; height: 7px;
+  background: var(--text-2);
+  box-shadow: 0 0 0 1.5px var(--bg-1), 0 0 0 2.5px var(--text-3);
+}
+
 /* ----- legend colorby selector ----- */
 .legend-colorby {
   display: flex;
@@ -850,8 +873,8 @@ button { font-family: inherit; }
 .tl-era::before {
   content: ""; position: absolute; left: 0; top: 0; bottom: 0;
   width: 3px;
-  background: var(--c);
-  box-shadow: 0 0 8px color-mix(in oklab, var(--c) 60%, transparent);
+  background: var(--pc, var(--c));
+  box-shadow: 0 0 8px color-mix(in oklab, var(--pc, var(--c)) 60%, transparent);
 }
 .tl-era-label {
   font-size: 11.5px;
@@ -890,10 +913,12 @@ button { font-family: inherit; }
 .tl-subject-dot {
   position: absolute;
   width: 8px; height: 8px; border-radius: 50%;
-  background: var(--c);
+  /* Место — точки показывают географию */
+  background: var(--pc, var(--c));
   border: 1.5px solid var(--bg-0);
   top: 50%; transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--c) 50%, transparent);
+  box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--pc, var(--c)) 45%, transparent),
+              0 0 7px color-mix(in oklab, var(--pc, var(--c)) 55%, transparent);
 }
 .tl-subject-dot.start { left: 0; }
 .tl-subject-dot.end { left: 100%; }
@@ -912,7 +937,9 @@ button { font-family: inherit; }
 }
 .tl-subject.selected .tl-subject-bar {
   height: 6px;
-  box-shadow: 0 0 0 1px var(--bg-0), 0 0 12px color-mix(in oklab, var(--c) 70%, transparent);
+  box-shadow: 0 0 0 1px var(--bg-0),
+              0 0 12px color-mix(in oklab, var(--c) 70%, transparent),
+              0 0 24px color-mix(in oklab, var(--pc, var(--c)) 30%, transparent);
 }
 .tl-subject.selected .tl-subject-label {
   font-weight: 700;
@@ -928,13 +955,18 @@ button { font-family: inherit; }
 .tl-event-dot {
   position: absolute;
   width: 10px; height: 10px;
+  /* Область — заливка */
   background: var(--c);
   border: 2px solid var(--bg-0);
   border-radius: 50%;
   top: 50%; left: 0;
   transform: translate(-50%, -50%) rotate(45deg);
-  box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--c) 60%, transparent),
-              0 0 12px color-mix(in oklab, var(--c) 45%, transparent);
+  /* Место — кольцо снаружи */
+  box-shadow:
+    0 0 0 1px var(--bg-0),
+    0 0 0 3px color-mix(in oklab, var(--pc, var(--c)) 80%, transparent),
+    0 0 10px color-mix(in oklab, var(--c) 40%, transparent),
+    0 0 16px color-mix(in oklab, var(--pc, var(--c)) 30%, transparent);
 }
 .tl-event-label {
   position: absolute; left: 10px; top: 50%; transform: translateY(-50%);

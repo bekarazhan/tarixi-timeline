@@ -165,6 +165,10 @@ function Legend({
       {/* ── Тип объекта ──────────────────────────────── */}
       <div className="legend-facet">
         <div className="legend-section-title">Тип объекта</div>
+        <div className="legend-encoding-hint">
+          <span><span className="legend-encoding-swatch domain"></span>заливка = область</span>
+          <span><span className="legend-encoding-swatch place"></span>точки = место</span>
+        </div>
         {['subject', 'event', 'era'].map(k => {
           const m = KIND_META[k];
           const on = activeKinds.has(k);
@@ -202,22 +206,6 @@ function Legend({
           );
         })}
       </div>
-
-      {/* ── Цвет показывает ──────────────────────────── */}
-      {onColorByChange && (
-        <div className="legend-facet">
-          <div className="legend-section-title">Цвет показывает</div>
-          <div className="legend-colorby">
-            {[['primary','Область'],['place','Место'],['mono','Моно']].map(([v, l]) => (
-              <button
-                key={v}
-                className={`legend-colorby-btn ${colorBy === v ? 'on' : ''}`}
-                onClick={() => onColorByChange(v)}
-              >{l}</button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Область ──────────────────────────────────── */}
       <div className="legend-facet">
