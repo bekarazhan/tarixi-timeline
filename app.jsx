@@ -272,6 +272,10 @@ function App() {
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
   const [activeKinds, setActiveKinds] = useState(() => new Set(['subject', 'event', 'era']));
+  const [activeSubkinds, setActiveSubkinds] = useState(
+    () => new Set(Object.keys(window.SUBKIND_META || {}))
+  );
+  const [customSubkinds, setCustomSubkinds] = useState([]);
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
 
@@ -336,6 +340,20 @@ function App() {
     });
   };
 
+  const handleToggleSubkind = (sk) => {
+    setActiveSubkinds(prev => {
+      const next = new Set(prev);
+      if (next.has(sk)) next.delete(sk); else next.add(sk);
+      return next;
+    });
+  };
+
+  const handleAddSubkind = (sk) => {
+    if (window.SUBKIND_META) window.SUBKIND_META[sk.id] = { label: sk.label, icon: sk.icon };
+    setCustomSubkinds(prev => [...prev, sk]);
+    setActiveSubkinds(prev => new Set([...prev, sk.id]));
+  };
+
   const rowHeight = t.density === 'compact' ? 18 : t.density === 'spacious' ? 32 : 22;
 
   return (
@@ -374,6 +392,10 @@ function App() {
             onToggleTag={handleToggleTag}
             activeKinds={activeKinds}
             onToggleKind={handleToggleKind}
+            activeSubkinds={activeSubkinds}
+            onToggleSubkind={handleToggleSubkind}
+            customSubkinds={customSubkinds}
+            onAddSubkind={handleAddSubkind}
             items={items}
             allTags={allTags}
             onAddTag={handleAddTag}
@@ -385,6 +407,7 @@ function App() {
             items={items}
             activeTags={activeTags}
             activeKinds={activeKinds}
+            activeSubkinds={activeSubkinds}
             showWorld={showWorld}
             selected={selected}
             onSelect={handleSelectAndZoom}
@@ -405,6 +428,7 @@ function App() {
               setView={setView}
               showWorld={showWorld}
               activeKinds={activeKinds}
+              activeSubkinds={activeSubkinds}
             />
           )}
         </div>

@@ -105,7 +105,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 
 // ===== главный компонент =====
 function Timeline({
-  items, activeTags, activeKinds, showWorld, selected, onSelect,
+  items, activeTags, activeKinds, activeSubkinds, showWorld, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
   rowHeight, showConnections, colorLogic,
 }) {
@@ -131,9 +131,10 @@ function Timeline({
     items.filter(it =>
       window.isItemVisible(it, activeTags) &&
       (showWorld || window.itemRegion(it) === 'kz') &&
-      (!activeKinds || activeKinds.has(it.kind))
+      (!activeKinds || activeKinds.has(it.kind)) &&
+      (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
     ),
-    [items, activeTags, activeKinds, showWorld]);
+    [items, activeTags, activeKinds, activeSubkinds, showWorld]);
 
   // -- packing lanes per region/track  --
   // зависит от viewport: при широком зуме события нужно разводить по lanes
@@ -534,7 +535,7 @@ function Timeline({
 }
 
 // ===== Minimap =====
-function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds }) {
+function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, activeSubkinds }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
 
@@ -555,7 +556,8 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds })
 
   const visibleItems = items.filter(it =>
     (showWorld || window.itemRegion(it) === 'kz') &&
-    (!activeKinds || activeKinds.has(it.kind))
+    (!activeKinds || activeKinds.has(it.kind)) &&
+    (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
   );
 
   // pan window via drag
