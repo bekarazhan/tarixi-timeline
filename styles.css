@@ -157,7 +157,7 @@ body::after {
 .app { position: relative; z-index: 3; }
 
 /* ---- vibe-specific tweaks для items ---- */
-[data-vibe="archive"] .tl-period {
+[data-vibe="archive"] .tl-era {
   background: linear-gradient(
     to bottom,
     color-mix(in oklab, var(--c) 12%, var(--bg-2)),
@@ -167,7 +167,7 @@ body::after {
   border-color: color-mix(in oklab, var(--c) 50%, transparent);
   box-shadow: 0 1px 0 rgba(0,0,0,0.4);
 }
-[data-vibe="archive"] .tl-period-label {
+[data-vibe="archive"] .tl-era-label {
   font-family: var(--font-disp);
   font-style: italic;
   font-size: 13px;
@@ -188,13 +188,13 @@ body::after {
   font-size: 12px; letter-spacing: 0.1em; text-transform: none;
 }
 
-[data-vibe="constellation"] .tl-period {
+[data-vibe="constellation"] .tl-era {
   background: color-mix(in oklab, var(--c) 12%, transparent);
   border-color: color-mix(in oklab, var(--c) 35%, transparent);
   border-radius: 999px;
   box-shadow: 0 0 18px color-mix(in oklab, var(--c) 25%, transparent);
 }
-[data-vibe="constellation"] .tl-period::before {
+[data-vibe="constellation"] .tl-era::before {
   background: linear-gradient(to bottom, transparent, var(--c), transparent);
   width: 2px;
   box-shadow: 0 0 14px var(--c);
@@ -210,11 +210,11 @@ body::after {
   transform: translate(-50%, -50%) rotate(0) scale(1.4);
   box-shadow: 0 0 20px var(--c), 0 0 40px var(--c);
 }
-[data-vibe="constellation"] .tl-person-bar {
+[data-vibe="constellation"] .tl-subject-bar {
   height: 2px;
   box-shadow: 0 0 6px color-mix(in oklab, var(--c) 80%, transparent);
 }
-[data-vibe="constellation"] .tl-person-dot {
+[data-vibe="constellation"] .tl-subject-dot {
   box-shadow: 0 0 0 1px var(--bg-0), 0 0 10px var(--c), 0 0 20px color-mix(in oklab, var(--c) 50%, transparent);
 }
 [data-vibe="constellation"] .tl-axis-line {
@@ -489,6 +489,15 @@ button { font-family: inherit; }
 .legend-divider {
   height: 1px; background: var(--line); margin: 4px 0;
 }
+.legend-subkind {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 6px 2px 20px;
+  font-size: 10.5px; color: var(--text-3);
+}
+.legend-subkind-icon { font-size: 10px; line-height: 1; }
+.legend-subkind-label { flex: 1; }
+.legend-subkind .legend-count { font-family: var(--font-mono); font-size: 9.5px; }
+
 .legend-kind-row {
   display: flex; gap: 16px;
   padding: 4px 10px;
@@ -790,7 +799,7 @@ button { font-family: inherit; }
 .tl-item.selected { z-index: 10; }
 
 /* period — длинный bar */
-.tl-period {
+.tl-era {
   height: var(--row-h);
   background: color-mix(in oklab, var(--c) 20%, var(--bg-1));
   border: 1px solid color-mix(in oklab, var(--c) 55%, transparent);
@@ -800,13 +809,13 @@ button { font-family: inherit; }
   position: absolute;
   min-width: 4px;
 }
-.tl-period::before {
+.tl-era::before {
   content: ""; position: absolute; left: 0; top: 0; bottom: 0;
   width: 3px;
   background: var(--c);
   box-shadow: 0 0 8px color-mix(in oklab, var(--c) 60%, transparent);
 }
-.tl-period-label {
+.tl-era-label {
   font-size: 11.5px;
   font-weight: 600;
   color: color-mix(in oklab, var(--c) 30%, var(--text-0));
@@ -815,23 +824,23 @@ button { font-family: inherit; }
   overflow: hidden;
   letter-spacing: 0.01em;
 }
-.tl-period:hover {
+.tl-era:hover {
   background: color-mix(in oklab, var(--c) 28%, var(--bg-1));
   border-color: color-mix(in oklab, var(--c) 75%, transparent);
 }
-.tl-period.selected {
+.tl-era.selected {
   background: color-mix(in oklab, var(--c) 35%, var(--bg-1));
   border-color: var(--c);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--c) 40%, transparent);
 }
 
 /* person — тонкий бар с точкой */
-.tl-person {
+.tl-subject {
   height: calc(var(--row-h) - 4px);
   display: flex; align-items: center;
   background: transparent;
 }
-.tl-person-bar {
+.tl-subject-bar {
   position: absolute; left: 0; right: 0;
   top: 50%; transform: translateY(-50%);
   height: 4px;
@@ -840,7 +849,7 @@ button { font-family: inherit; }
     color-mix(in oklab, var(--c) 100%, transparent) 100%);
   border-radius: 2px;
 }
-.tl-person-dot {
+.tl-subject-dot {
   position: absolute;
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--c);
@@ -848,9 +857,9 @@ button { font-family: inherit; }
   top: 50%; transform: translate(-50%, -50%);
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--c) 50%, transparent);
 }
-.tl-person-dot.start { left: 0; }
-.tl-person-dot.end { left: 100%; }
-.tl-person-label {
+.tl-subject-dot.start { left: 0; }
+.tl-subject-dot.end { left: 100%; }
+.tl-subject-label {
   position: absolute; left: 0; top: 50%; transform: translate(0, -130%);
   font-size: 11px;
   color: var(--text-0);
@@ -860,14 +869,14 @@ button { font-family: inherit; }
   pointer-events: none;
   text-shadow: 0 1px 2px var(--bg-0);
 }
-.tl-person:hover .tl-person-bar {
+.tl-subject:hover .tl-subject-bar {
   filter: brightness(1.2);
 }
-.tl-person.selected .tl-person-bar {
+.tl-subject.selected .tl-subject-bar {
   height: 6px;
   box-shadow: 0 0 0 1px var(--bg-0), 0 0 12px color-mix(in oklab, var(--c) 70%, transparent);
 }
-.tl-person.selected .tl-person-label {
+.tl-subject.selected .tl-subject-label {
   font-weight: 700;
   color: var(--c);
 }

@@ -3,9 +3,9 @@
 const { useMemo, useState, useRef } = React;
 
 const KIND_META = {
-  person: { label: 'Личности',  color: '#cbd1e1' },
-  event:  { label: 'События',   color: '#5fd49a' },
-  period: { label: 'Периоды',   color: '#38bdf8' },
+  subject: { label: 'Субъекты', color: '#cbd1e1' },
+  event:   { label: 'События',  color: '#5fd49a' },
+  era:     { label: 'Эпохи',    color: '#38bdf8' },
 };
 
 const PALETTE = [
@@ -75,10 +75,20 @@ function Legend({ activeTags, onToggleTag, activeKinds, onToggleKind, items, all
   }, [items]);
 
   const kindCounts = useMemo(() => ({
-    person: items.filter(i => i.kind === 'person').length,
-    event:  items.filter(i => i.kind === 'event').length,
-    period: items.filter(i => i.kind === 'period').length,
+    subject: items.filter(i => i.kind === 'subject').length,
+    event:   items.filter(i => i.kind === 'event').length,
+    era:     items.filter(i => i.kind === 'era').length,
   }), [items]);
+
+  // Счётчик по subkind (для субъектов)
+  const subkindCounts = useMemo(() => {
+    const c = {};
+    items.filter(i => i.kind === 'subject').forEach(i => {
+      const sk = i.subkind || 'person';
+      c[sk] = (c[sk] || 0) + 1;
+    });
+    return c;
+  }, [items]);
 
   const domainTags = allTags.filter(t => t.facet === 'domain');
   const placeTags  = allTags.filter(t => t.facet === 'place');
@@ -92,14 +102,27 @@ function Legend({ activeTags, onToggleTag, activeKinds, onToggleKind, items, all
       {/* ── Тип объекта ──────────────────────────────── */}
       <div className="legend-facet">
         <div className="legend-section-title">Тип объекта</div>
-        {['person', 'event', 'period'].map(k => {
+        {['subject', 'event', 'era'].map(k => {
           const m = KIND_META[k];
           const on = activeKinds.has(k);
           return (
-            <div key={k} className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
-              <span className="legend-swatch point" style={{ background: m.color, color: m.color }}></span>
-              <span className="legend-label">{m.label}</span>
-              <span className="legend-count">{kindCounts[k]}</span>
+            <div key={k}>
+              <div className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
+                <span className="legend-swatch point" style={{ background: m.color, color: m.color }}></span>
+                <span className="legend-label">{m.label}</span>
+                <span className="legend-count">{kindCounts[k]}</span>
+              </div>
+              {/* Субкинды — только для субъектов, только когда включены */}
+              {k === 'subject' && on && Object.keys(subkindCounts).map(sk => {
+                const meta = (window.SUBKIND_META || {})[sk];
+                return (
+                  <div key={sk} className="legend-subkind">
+                    <span className="legend-subkind-icon">{meta?.icon || '·'}</span>
+                    <span className="legend-subkind-label">{meta?.label || sk}</span>
+                    <span className="legend-count">{subkindCounts[sk]}</span>
+                  </div>
+                );
+              })}
             </div>
           );
         })}

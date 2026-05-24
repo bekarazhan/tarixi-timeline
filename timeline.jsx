@@ -4,13 +4,13 @@
 
 const { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } = React;
 
-// Треки: 0=события, 1=личности, 2=государства, 3=эпохи
-const NUM_TRACKS = 4;
+// Треки: 0=события, 1=субъекты (люди/народы/государства/города…), 2=эпохи
+const NUM_TRACKS = 3;
 
 function trackOfItem(item) {
-  if (item.kind === 'event') return 0;
-  if (item.kind === 'person') return 1;
-  if (item.kind === 'period') return item.subkind === 'era' ? 3 : 2;
+  if (item.kind === 'event')   return 0;
+  if (item.kind === 'subject') return 1;
+  if (item.kind === 'era')     return 2;
   return 1;
 }
 
@@ -343,41 +343,37 @@ function Timeline({
     // skip off-screen Y
     if (yBase < -40 || yBase > size.h + 40) return null;
 
-    if (item.kind === 'period') {
+    if (item.kind === 'era') {
       const w = Math.max(2, x2 - x1);
       return (
         <div key={item.id}
-          className={`tl-item tl-period ${isSelected ? 'selected' : ''}`}
-          style={{
-            left: x1, top: yBase, width: w, '--c': color,
-          }}
+          className={`tl-item tl-era ${isSelected ? 'selected' : ''}`}
+          style={{ left: x1, top: yBase, width: w, '--c': color }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
           onMouseLeave={() => setHover(null)}
         >
-          <span className="tl-period-label">{window.itemLabel(item)}</span>
+          <span className="tl-era-label">{window.itemLabel(item)}</span>
         </div>
       );
     }
 
-    if (item.kind === 'person') {
+    if (item.kind === 'subject') {
       const w = Math.max(8, x2 - x1);
       return (
         <div key={item.id}
-          className={`tl-item tl-person ${isSelected ? 'selected' : ''}`}
-          style={{
-            left: x1, top: yBase, width: w, height: ROW - 4, '--c': color,
-          }}
+          className={`tl-item tl-subject ${isSelected ? 'selected' : ''}`}
+          style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': color }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
           onMouseLeave={() => setHover(null)}
         >
-          <div className="tl-person-bar"></div>
-          <div className="tl-person-dot start"></div>
-          <div className="tl-person-dot end"></div>
-          {w > 40 && <div className="tl-person-label">{item.name}</div>}
+          <div className="tl-subject-bar"></div>
+          <div className="tl-subject-dot start"></div>
+          <div className="tl-subject-dot end"></div>
+          {w > 40 && <div className="tl-subject-label">{item.name}</div>}
         </div>
       );
     }

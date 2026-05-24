@@ -57,12 +57,13 @@ function InlineTagCreator({ facetId, onAdd }) {
 
 // ── Форма создания объекта ──────────────────────────────────────
 function CreateModal({ onClose, onSave, allTags, onAddTag }) {
-  const [kind, setKind]   = useState('event');
-  const [name, setName]   = useState('');
-  const [start, setStart] = useState('');
-  const [end,   setEnd]   = useState('');
+  const [kind,    setKind]    = useState('event');
+  const [subkind, setSubkind] = useState('person');
+  const [name,    setName]    = useState('');
+  const [start,   setStart]   = useState('');
+  const [end,     setEnd]     = useState('');
   const [selTags, setSelTags] = useState(['kz']);
-  const [desc, setDesc]   = useState('');
+  const [desc,    setDesc]    = useState('');
 
   const toggleTag = (id) => setSelTags(prev =>
     prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
@@ -83,10 +84,11 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     onSave({
       id: 'user-' + Date.now(),
       kind,
+      subkind: kind === 'subject' ? subkind : undefined,
       name: name.trim(),
       tags: selTags,
       start: s, end: e,
-      lifeSpan: kind === 'person' ? `${start} — ${end || start}` : undefined,
+      lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
       desc: desc.trim(),
     });
     onClose();
@@ -113,11 +115,22 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
           <div className="cm-field">
             <label className="cm-label">Тип объекта</label>
             <div className="cm-seg">
-              {[['event','Событие'],['person','Личность'],['period','Период']].map(([v,l]) => (
+              {[['event','Событие'],['subject','Субъект'],['era','Эпоха']].map(([v,l]) => (
                 <button key={v} className={kind===v ? 'active' : ''} onClick={() => setKind(v)}>{l}</button>
               ))}
             </div>
           </div>
+
+          {kind === 'subject' && (
+            <div className="cm-field">
+              <label className="cm-label">Подтип субъекта</label>
+              <div className="cm-seg">
+                {[['person','👤 Человек'],['people','👥 Народность'],['state','🏛 Государство'],['city','🏙 Город']].map(([v,l]) => (
+                  <button key={v} className={subkind===v ? 'active' : ''} onClick={() => setSubkind(v)}>{l}</button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="cm-field">
             <label className="cm-label">Название</label>
@@ -131,7 +144,9 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
             </div>
             {kind !== 'event' && (
               <div className="cm-field">
-                <label className="cm-label">{kind==='person' ? 'Год смерти' : 'Конец'}</label>
+                <label className="cm-label">
+                  {kind === 'subject' && subkind === 'person' ? 'Год смерти' : 'Конец'}
+                </label>
                 <input className="cm-input" type="number" value={end} onChange={e => setEnd(e.target.value)} placeholder="500"/>
               </div>
             )}
@@ -256,7 +271,7 @@ function App() {
   const [createOpen, setCreateOpen] = useState(false);
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
-  const [activeKinds, setActiveKinds] = useState(() => new Set(['person', 'event', 'period']));
+  const [activeKinds, setActiveKinds] = useState(() => new Set(['subject', 'event', 'era']));
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
 
