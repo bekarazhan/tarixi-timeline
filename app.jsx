@@ -399,6 +399,8 @@ function App() {
             items={items}
             allTags={allTags}
             onAddTag={handleAddTag}
+            colorBy={t.colorLogic || 'primary'}
+            onColorByChange={(v) => setTweak('colorLogic', v)}
           />
         )}
 
@@ -452,18 +454,6 @@ function App() {
             { value: 'constellation', label: 'Cosmos' },
           ]}
           onChange={(v) => setTweak('vibe', v)}
-        />
-
-        <window.TweakSection label="Цветовая логика — что кодируют цвета" />
-        <window.TweakRadio
-          label="Раскраска"
-          value={t.colorLogic || 'primary'}
-          options={[
-            { value: 'primary', label: 'Область' },
-            { value: 'place',   label: 'Место' },
-            { value: 'mono',    label: 'Моно' },
-          ]}
-          onChange={(v) => setTweak('colorLogic', v)}
         />
 
         <window.TweakSection label="Подача времени — как растягивается шкала" />

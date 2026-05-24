@@ -115,6 +115,7 @@ function Legend({
   activeSubkinds, onToggleSubkind,
   customSubkinds, onAddSubkind,
   items, allTags, onAddTag,
+  colorBy, onColorByChange,
 }) {
   allTags = allTags || window.TAG_CATALOG;
 
@@ -201,6 +202,22 @@ function Legend({
           );
         })}
       </div>
+
+      {/* ── Цвет показывает ──────────────────────────── */}
+      {onColorByChange && (
+        <div className="legend-facet">
+          <div className="legend-section-title">Цвет показывает</div>
+          <div className="legend-colorby">
+            {[['primary','Область'],['place','Место'],['mono','Моно']].map(([v, l]) => (
+              <button
+                key={v}
+                className={`legend-colorby-btn ${colorBy === v ? 'on' : ''}`}
+                onClick={() => onColorByChange(v)}
+              >{l}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Область ──────────────────────────────────── */}
       <div className="legend-facet">
