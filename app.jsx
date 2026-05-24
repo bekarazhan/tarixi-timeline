@@ -61,7 +61,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
   const [name, setName]   = useState('');
   const [start, setStart] = useState('');
   const [end,   setEnd]   = useState('');
-  const [selTags, setSelTags] = useState(['world', 'event']);
+  const [selTags, setSelTags] = useState(['kz']);
   const [desc, setDesc]   = useState('');
 
   const toggleTag = (id) => setSelTags(prev =>
@@ -74,7 +74,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     setSelTags(prev => [...prev, tag.id]);
   };
 
-  const valid = name.trim() && start && selTags.some(id => ['kz','world','asia'].includes(id));
+  const valid = name.trim() && start && selTags.some(id => window.TAG_MAP[id]?.facet === 'place');
 
   const handleSave = () => {
     if (!valid) return;
@@ -92,7 +92,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     onClose();
   };
 
-  const byFacet = ['role', 'type', 'place', 'theme'].map(fid => ({
+  const byFacet = ['domain', 'place'].map(fid => ({
     facet: window.FACETS[fid],
     tags:  allTags.filter(t => t.facet === fid),
   }));
@@ -256,6 +256,7 @@ function App() {
   const [createOpen, setCreateOpen] = useState(false);
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
+  const [activeKinds, setActiveKinds] = useState(() => new Set(['person', 'event', 'period']));
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
 
@@ -312,6 +313,14 @@ function App() {
     });
   };
 
+  const handleToggleKind = (kind) => {
+    setActiveKinds(prev => {
+      const next = new Set(prev);
+      if (next.has(kind)) next.delete(kind); else next.add(kind);
+      return next;
+    });
+  };
+
   const rowHeight = t.density === 'compact' ? 18 : t.density === 'spacious' ? 32 : 22;
 
   return (
@@ -348,8 +357,11 @@ function App() {
           <window.Legend
             activeTags={activeTags}
             onToggleTag={handleToggleTag}
+            activeKinds={activeKinds}
+            onToggleKind={handleToggleKind}
             items={items}
             allTags={allTags}
+            onEpochJump={setView}
           />
         )}
 
@@ -357,6 +369,7 @@ function App() {
           <window.Timeline
             items={items}
             activeTags={activeTags}
+            activeKinds={activeKinds}
             showWorld={showWorld}
             selected={selected}
             onSelect={handleSelectAndZoom}
@@ -376,6 +389,7 @@ function App() {
               viewEnd={view.end}
               setView={setView}
               showWorld={showWorld}
+              activeKinds={activeKinds}
             />
           )}
         </div>
@@ -406,8 +420,7 @@ function App() {
           label="Раскраска"
           value={t.colorLogic || 'primary'}
           options={[
-            { value: 'primary', label: 'Тег' },
-            { value: 'role',    label: 'Роль' },
+            { value: 'primary', label: 'Область' },
             { value: 'place',   label: 'Место' },
             { value: 'mono',    label: 'Моно' },
           ]}

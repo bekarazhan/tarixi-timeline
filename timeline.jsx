@@ -10,7 +10,7 @@ const NUM_TRACKS = 4;
 function trackOfItem(item) {
   if (item.kind === 'event') return 0;
   if (item.kind === 'person') return 1;
-  if (item.kind === 'period') return item.tags.includes('era') ? 3 : 2;
+  if (item.kind === 'period') return item.subkind === 'era' ? 3 : 2;
   return 1;
 }
 
@@ -105,7 +105,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 
 // ===== главный компонент =====
 function Timeline({
-  items, activeTags, showWorld, selected, onSelect,
+  items, activeTags, activeKinds, showWorld, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
   rowHeight, showConnections, colorLogic,
 }) {
@@ -128,8 +128,12 @@ function Timeline({
 
   // -- фильтрация --
   const filtered = useMemo(() =>
-    items.filter(it => window.isItemVisible(it, activeTags) && (showWorld || window.itemRegion(it) === 'kz')),
-    [items, activeTags, showWorld]);
+    items.filter(it =>
+      window.isItemVisible(it, activeTags) &&
+      (showWorld || window.itemRegion(it) === 'kz') &&
+      (!activeKinds || activeKinds.has(it.kind))
+    ),
+    [items, activeTags, activeKinds, showWorld]);
 
   // -- packing lanes per region/track  --
   // зависит от viewport: при широком зуме события нужно разводить по lanes
@@ -534,7 +538,7 @@ function Timeline({
 }
 
 // ===== Minimap =====
-function Minimap({ items, viewStart, viewEnd, setView, showWorld }) {
+function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
 
@@ -553,7 +557,10 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld }) {
 
   const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MIN_Y || ep.end >= MIN_Y);
 
-  const visibleItems = items.filter(it => (showWorld || window.itemRegion(it) === 'kz'));
+  const visibleItems = items.filter(it =>
+    (showWorld || window.itemRegion(it) === 'kz') &&
+    (!activeKinds || activeKinds.has(it.kind))
+  );
 
   // pan window via drag
   const dragRef = useRef(null);
