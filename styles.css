@@ -1262,29 +1262,74 @@ button { font-family: inherit; }
   color: var(--text-0) !important;
 }
 
-/* ----- legend-epoch (быстрый переход) ----- */
-.legend-epoch {
-  display: flex; align-items: center; gap: 7px;
-  padding: 5px 6px;
+/* ----- legend inline tag creator (Google Calendar style) ----- */
+.legend-tag-add {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px dashed var(--line-strong);
   border-radius: var(--radius-s);
+  color: var(--text-3);
+  font: 11px var(--font-ui);
   cursor: pointer;
-  transition: background 0.12s;
+  transition: border-color 0.12s, color 0.12s;
+  width: 100%;
+  justify-content: center;
 }
-.legend-epoch:hover { background: var(--bg-3); }
-.legend-epoch-bar {
+.legend-tag-add:hover { border-color: var(--text-3); color: var(--text-2); }
+
+.legend-tag-creator {
+  margin-top: 8px;
+  padding: 10px;
+  background: var(--bg-3);
+  border-radius: var(--radius-m);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.legend-tag-input {
+  width: 100%; box-sizing: border-box;
+  padding: 6px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  color: var(--text-0);
+  font: 12px var(--font-ui);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.legend-tag-input:focus { border-color: var(--text-3); }
+.legend-tag-input::placeholder { color: var(--text-3); }
+
+.legend-tag-palette {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.legend-tag-color {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
   flex-shrink: 0;
-  width: 3px; height: 20px;
-  border-radius: 2px;
-  background: var(--ec, var(--text-3));
-  opacity: 0.85;
 }
-.legend-epoch-name {
-  flex: 1;
-  font-size: 11.5px; color: var(--text-1);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.legend-tag-color:hover { transform: scale(1.15); }
+.legend-tag-color.on { border-color: #fff; transform: scale(1.1); }
+
+.legend-tag-creator-foot {
+  display: flex; justify-content: flex-end; gap: 6px;
 }
-.legend-epoch-yrs {
-  font-size: 9.5px; color: var(--text-3);
-  font-family: var(--font-mono);
-  white-space: nowrap;
+.legend-tag-cancel {
+  background: transparent; border: none;
+  color: var(--text-3); font: 11px var(--font-ui);
+  cursor: pointer; padding: 4px 6px; border-radius: var(--radius-s);
+  transition: color 0.12s;
 }
+.legend-tag-cancel:hover { color: var(--text-2); }
+.legend-tag-ok {
+  padding: 4px 10px;
+  background: var(--accent); color: var(--bg-0);
+  border: none; border-radius: var(--radius-s);
+  font: 600 11px var(--font-ui);
+  cursor: pointer;
+  transition: opacity 0.12s;
+}
+.legend-tag-ok:disabled { opacity: 0.35; cursor: default; }
+.legend-tag-ok:not(:disabled):hover { opacity: 0.85; }

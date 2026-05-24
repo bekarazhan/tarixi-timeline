@@ -361,7 +361,7 @@ function App() {
             onToggleKind={handleToggleKind}
             items={items}
             allTags={allTags}
-            onEpochJump={setView}
+            onAddTag={handleAddTag}
           />
         )}
 
