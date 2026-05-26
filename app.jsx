@@ -494,4 +494,44 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// Ждем загрузки всех данных перед рендерингом
+function waitForData(maxAttempts = 100) {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const check = () => {
+      attempts++;
+      if (window.ALL_ITEMS && window.FACETS && window.TAG_CATALOG) {
+        console.log('[App] Data loaded successfully:', {
+          ALL_ITEMS: window.ALL_ITEMS.length,
+          FACETS: Object.keys(window.FACETS).length,
+          TAG_CATALOG: window.TAG_CATALOG.length
+        });
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        reject(new Error('Timeout waiting for data to load'));
+      } else {
+        console.log(`[App] Waiting for data... attempt ${attempts}/${maxAttempts}`);
+        setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+}
+
+waitForData()
+  .then(() => {
+    console.log('[App] Starting render...');
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  })
+  .catch((err) => {
+    console.error('[App] Failed to initialize:', err);
+    document.getElementById('root').innerHTML = `
+      <div style="padding: 40px; background: #181c28; color: #ef5a6a; border-radius: 8px; margin: 20px;">
+        <h2 style="margin: 0 0 10px;">Ошибка загрузки</h2>
+        <p style="margin: 0; font-family: monospace;">${err.message}</p>
+        <p style="margin: 20px 0 0; font-size: 12px; color: #8b91a4;">
+          Проверьте консоль браузера (F12) для получения дополнительной информации.
+        </p>
+      </div>
+    `;
+  });

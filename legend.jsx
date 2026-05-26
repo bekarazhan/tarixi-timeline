@@ -165,6 +165,26 @@ function Legend({
       {/* ── Тип объекта ──────────────────────────────── */}
       <div className="legend-facet">
         <div className="legend-section-title">Тип объекта</div>
+        
+        {/* Переключатель режима цвета */}
+        <div style={{ marginBottom: '10px' }}>
+          <div className="legend-section-title" style={{ marginBottom: '6px' }}>Режим цвета</div>
+          <div className="legend-colorby">
+            <button 
+              className={`legend-colorby-btn ${!colorBy || colorBy === 'primary' || colorBy === 'category' ? 'on' : ''}`}
+              onClick={() => onColorByChange && onColorByChange('category')}
+            >Область</button>
+            <button 
+              className={`legend-colorby-btn ${colorBy === 'place' ? 'on' : ''}`}
+              onClick={() => onColorByChange && onColorByChange('place')}
+            >Место</button>
+            <button 
+              className={`legend-colorby-btn ${colorBy === 'both' ? 'on' : ''}`}
+              onClick={() => onColorByChange && onColorByChange('both')}
+            >Оба</button>
+          </div>
+        </div>
+        
         <div className="legend-encoding-hint">
           <span><span className="legend-encoding-swatch domain"></span>заливка = область</span>
           <span><span className="legend-encoding-swatch place"></span>точки = место</span>
@@ -205,54 +225,6 @@ function Legend({
             </div>
           );
         })}
-      </div>
-
-      {/* ── Область ──────────────────────────────────── */}
-      <div className="legend-facet">
-        <div className="legend-section-title" style={{ display: 'flex', alignItems: 'center' }}>
-          <span>Область</span>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em' }}>
-            {activeDomainCount}/{domainTags.length}
-          </span>
-        </div>
-        {domainTags.map(tag => {
-          const on = activeTags.has(tag.id);
-          return (
-            <div key={tag.id} className="legend-item" data-off={!on}
-              onClick={() => onToggleTag(tag.id)}
-              title={`${tag.name} — клик чтобы скрыть/показать`}
-            >
-              <span className="legend-swatch point" style={{ background: tag.color }}></span>
-              <span className="legend-label">{tag.name}</span>
-              <span className="legend-count">{tagCounts[tag.id] || 0}</span>
-            </div>
-          );
-        })}
-        {onAddTag && <LegendTagCreator facetId="domain" onAdd={onAddTag} />}
-      </div>
-
-      {/* ── Место ────────────────────────────────────── */}
-      <div className="legend-facet">
-        <div className="legend-section-title" style={{ display: 'flex', alignItems: 'center' }}>
-          <span>Место</span>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: '0.1em' }}>
-            {activePlaceCount}/{placeTags.length}
-          </span>
-        </div>
-        {placeTags.map(tag => {
-          const on = activeTags.has(tag.id);
-          return (
-            <div key={tag.id} className="legend-item" data-off={!on}
-              onClick={() => onToggleTag(tag.id)}
-              title={`${tag.name} — клик чтобы скрыть/показать`}
-            >
-              <span className="legend-swatch point" style={{ background: tag.color }}></span>
-              <span className="legend-label">{tag.name}</span>
-              <span className="legend-count">{tagCounts[tag.id] || 0}</span>
-            </div>
-          );
-        })}
-        {onAddTag && <LegendTagCreator facetId="place" onAdd={onAddTag} />}
       </div>
 
       <div className="legend-foot">

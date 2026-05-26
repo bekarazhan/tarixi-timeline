@@ -335,9 +335,13 @@ function Timeline({
     const x1 = scale.yearToX(s);
     const x2 = scale.yearToX(e);
     const yBase = itemY(item) + scrollY;
-    // Два цвета: область (заливка) + место (вторичный элемент)
-    const domainColor = window.colorForItem(item, 'primary');
-    const placeColor  = window.colorForItem(item, 'place');
+    // Логика выбора цвета на основе colorLogic
+    // primary/category = только domain, place = только place, both = оба
+    const colorMode = colorLogic || 'category';
+    
+    const domainColor = window.colorForItem(item, colorMode === 'place' ? 'place' : 'primary');
+    const placeColor  = colorMode === 'both' || colorMode === 'place' ? window.colorForItem(item, 'place') : domainColor;
+    
     const isSelected = selected && selected.id === item.id;
     const isDim = selected && selected.id !== item.id;
 
