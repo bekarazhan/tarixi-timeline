@@ -191,7 +191,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
   );
 }
 
-function UniverseSelector({ currentUniverse, onSelect, items }) {
+function UniverseSelector({ activeUniverses, onToggle, items, universes, onCreateUniverse, onEditUniverse, onDeleteUniverse }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const btnRef = useRef(null);
@@ -208,31 +208,14 @@ function UniverseSelector({ currentUniverse, onSelect, items }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const universes = window.UNIVERSE_META || [];
-  const current = universes.find(u => u.id === currentUniverse) || universes[0];
-
-  // Handler for universe management actions
-  const handleCreateUniverse = (universeData) => {
-    const newUniverse = window.createUniverse(universeData);
-    console.log('[App] Created universe:', newUniverse);
-  };
-
-  const handleEditUniverse = (universeId, updates) => {
-    const updated = window.updateUniverse(universeId, updates);
-    console.log('[App] Updated universe:', updated);
-  };
-
-  const handleDeleteUniverse = (universeId) => {
-    const result = window.deleteUniverseFromMeta(universeId);
-    if (result.success) {
-      // Remove items belonging to deleted universe
-      const updatedItems = items.filter(item => item.universe !== universeId);
-      window.ALL_ITEMS = updatedItems;
-      // Trigger re-render by updating state in parent
-      return updatedItems;
-    }
-    return null;
-  };
+  const safeUniverses = universes || [];
+  const activeList = safeUniverses.filter(u => activeUniverses && activeUniverses.has(u.id));
+  const btnIcons = activeList.slice(0, 3).map(u => u.icon).join(' ');
+  const btnLabel = activeList.length === 1
+    ? activeList[0].name
+    : activeList.length > 1
+      ? `${activeList.length} коллекции`
+      : 'История';
 
   return (
     <div className="universe-selector">
@@ -241,52 +224,42 @@ function UniverseSelector({ currentUniverse, onSelect, items }) {
         className="universe-btn"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        title={`Текущая вселенная: ${current.name}`}
+        title={`Активные коллекции: ${activeList.map(u => u.name).join(', ')}`}
       >
-        <span className="universe-btn-icon">{current.icon}</span>
-        <span className="universe-btn-name">{current.name}</span>
+        <span className="universe-btn-icon">{btnIcons || '🌐'}</span>
+        <span className="universe-btn-name">{btnLabel}</span>
         <svg className="universe-btn-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
           <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       <div ref={dropdownRef} className="universe-dropdown" data-open={open}>
-        {window.UniverseManagerPanel && (
+        {window.UniverseManagerPanel ? (
           <window.UniverseManagerPanel
-            currentUniverse={currentUniverse}
-            universes={universes}
+            activeUniverses={activeUniverses || new Set()}
+            universes={safeUniverses}
             items={items}
-            onCreate={handleCreateUniverse}
-            onEdit={handleEditUniverse}
-            onDelete={(uid) => {
-              const updatedItems = handleDeleteUniverse(uid);
-              if (updatedItems) {
-                // Force parent to update items
-                const event = new CustomEvent('universe-deleted', { detail: { universeId: uid, items: updatedItems } });
-                window.dispatchEvent(event);
-              }
-            }}
-            onSwitch={(uid) => { onSelect(uid); setOpen(false); }}
+            onCreate={onCreateUniverse}
+            onEdit={onEditUniverse}
+            onDelete={onDeleteUniverse}
+            onToggle={onToggle}
           />
-        ) || (
-          // Fallback if UniverseManagerPanel not loaded
+        ) : (
+          // Fallback
           <>
-            <div className="universe-dropdown-header">Вселенные</div>
-            {universes.map(u => (
+            <div className="universe-dropdown-header">Коллекции</div>
+            {safeUniverses.map(u => (
               <button
                 key={u.id}
                 className="universe-option"
-                data-active={u.id === currentUniverse}
-                onClick={() => { onSelect(u.id); setOpen(false); }}
+                data-active={activeUniverses && activeUniverses.has(u.id)}
+                onClick={() => onToggle(u.id)}
               >
                 <span className="universe-option-icon">{u.icon}</span>
                 <div className="universe-option-body">
                   <div className="universe-option-name">{u.name}</div>
                   <div className="universe-option-desc">{u.description}</div>
                 </div>
-                <svg className="universe-option-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M13 4L6 11l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
               </button>
             ))}
           </>
@@ -384,39 +357,62 @@ function App() {
     () => new Set(Object.keys(window.SUBKIND_META || {}))
   );
   const [customSubkinds, setCustomSubkinds] = useState([]);
-  const [currentUniverse, setCurrentUniverse] = useState(window.DEFAULT_UNIVERSE?.id || 'main');
+  const [activeUniverses, setActiveUniverses] = useState(() => new Set([window.DEFAULT_UNIVERSE?.id || 'main']));
+  const [universes, setUniverses] = useState(() => [...(window.UNIVERSE_META || [window.DEFAULT_UNIVERSE])]);
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
 
-  // Filter items by current universe
+  // Union-фильтрация по нескольким активным коллекциям
   const filteredItems = useMemo(() => {
-    return window.filterByUniverse(items, currentUniverse);
-  }, [items, currentUniverse]);
+    return window.filterByUniverses(items, activeUniverses);
+  }, [items, activeUniverses]);
 
-  // Listen for universe deletion events
-  useEffect(() => {
-    const handleUniverseDeleted = (e) => {
-      const { items: updatedItems } = e.detail;
-      setItems(updatedItems);
-    };
-    
-    window.addEventListener('universe-deleted', handleUniverseDeleted);
-    return () => window.removeEventListener('universe-deleted', handleUniverseDeleted);
+  // Тоггл: добавить/убрать вселенную из активных (нельзя убрать последнюю)
+  const handleToggleUniverse = useCallback((universeId) => {
+    setActiveUniverses(prev => {
+      const next = new Set(prev);
+      if (next.has(universeId)) {
+        if (next.size > 1) next.delete(universeId);
+      } else {
+        next.add(universeId);
+      }
+      return next;
+    });
   }, []);
 
-  const showWorld = allTags
-    .filter(t => t.facet === 'place' && t.id !== 'kz')
-    .some(t => activeTags.has(t.id));
+  const handleCreateUniverse = useCallback((universeData) => {
+    window.createUniverse(universeData);
+    setUniverses([...window.UNIVERSE_META]);
+  }, []);
+
+  const handleEditUniverse = useCallback((universeId, updates) => {
+    window.updateUniverse(universeId, updates);
+    setUniverses([...window.UNIVERSE_META]);
+  }, []);
+
+  const handleDeleteUniverse = useCallback((universeId) => {
+    const result = window.deleteUniverseFromMeta(universeId);
+    if (result.success) {
+      setUniverses([...window.UNIVERSE_META]);
+      setItems(prev => prev.filter(item => item.universe !== universeId));
+      setActiveUniverses(prev => {
+        const next = new Set(prev);
+        next.delete(universeId);
+        if (next.size === 0) next.add(window.DEFAULT_UNIVERSE?.id || 'main');
+        return next;
+      });
+    }
+  }, []);
 
   const setView = useCallback((start, end) => {
     setViewState({ start, end });
   }, []);
 
   const handleCreate = useCallback((item) => {
-    // Assign new item to current universe
-    const itemWithUniverse = window.setUniverseId(item, currentUniverse);
+    // Новые объекты идут в 'main' по умолчанию
+    const itemWithUniverse = window.setUniverseId(item, window.DEFAULT_UNIVERSE?.id || 'main');
     setItems(prev => [...prev, itemWithUniverse]);
-  }, [currentUniverse]);
+  }, []);
 
   const handleAddTag = useCallback((tag) => {
     window.TAG_MAP[tag.id] = tag;
@@ -444,7 +440,7 @@ function App() {
   }, [view, setView]);
 
   const handleSelectAndZoom = useCallback((item) => {
-    if (item.kind === 'period') {
+    if (item.kind === 'era') {
       const pad = (item.end - item.start) * 0.15;
       setView(item.start - pad, item.end + pad);
     }
@@ -492,9 +488,13 @@ function App() {
         </div>
 
         <UniverseSelector
-          currentUniverse={currentUniverse}
-          onSelect={setCurrentUniverse}
+          activeUniverses={activeUniverses}
+          onToggle={handleToggleUniverse}
           items={items}
+          universes={universes}
+          onCreateUniverse={handleCreateUniverse}
+          onEditUniverse={handleEditUniverse}
+          onDeleteUniverse={handleDeleteUniverse}
         />
 
         <div className="header-spacer"></div>
@@ -541,7 +541,6 @@ function App() {
             activeTags={activeTags}
             activeKinds={activeKinds}
             activeSubkinds={activeSubkinds}
-            showWorld={showWorld}
             selected={selected}
             onSelect={handleSelectAndZoom}
             density={t.density}
@@ -559,7 +558,6 @@ function App() {
               viewStart={view.start}
               viewEnd={view.end}
               setView={setView}
-              showWorld={showWorld}
               activeKinds={activeKinds}
               activeSubkinds={activeSubkinds}
             />

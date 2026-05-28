@@ -548,7 +548,7 @@ const ALL_ITEMS = [
     name: 'Локи',
     tags: ['culture', 'america'],
     start: -1000, end: 2025,
-    desc: 'Бог обмана, приёмный брат Тора. Антигерой с复杂ными мотивами.',
+    desc: 'Бог обмана, приёмный брат Тора. Антигерой со сложными мотивами.',
   },
   {
     id: 'marvel-green-goblin', kind: 'subject', subkind: 'person', universe: 'marvel',
@@ -775,37 +775,53 @@ const ALL_ITEMS = [
 // Default universe - all existing items belong to this universe
 const DEFAULT_UNIVERSE = {
   id: 'main',
-  name: 'Основная',
-  description: 'Основная временная шкала истории',
+  name: 'Вся история',
+  description: 'Все события — Казахстан и мир вместе',
   color: '#3b82f6',
-  icon: '🌍',
+  icon: '🌐',
   protected: true,
 };
 
 // Initial sample universes (for first-time users)
 const INITIAL_UNIVERSE_META = [
   DEFAULT_UNIVERSE,
-  { 
-    id: 'alt-history', 
-    name: 'Альтернативная', 
-    description: 'Альтернативная история: что если бы...', 
-    color: '#8b5cf6', 
+  {
+    id: 'kz',
+    name: 'Казахстан',
+    description: 'История казахского народа и государства',
+    color: '#38bdf8',
+    icon: '🇰🇿',
+    protected: true,
+  },
+  {
+    id: 'world',
+    name: 'Мировая история',
+    description: 'Всемирная история — за пределами Казахстана',
+    color: '#5fd49a',
+    icon: '🌍',
+    protected: true,
+  },
+  {
+    id: 'alt-history',
+    name: 'Альтернативная',
+    description: 'Альтернативная история: что если бы...',
+    color: '#8b5cf6',
     icon: '🌀',
     protected: false,
   },
-  { 
-    id: 'fiction', 
-    name: 'Вымышленная', 
-    description: 'Вымышленные вселенные: книги, фильмы, игры', 
-    color: '#ec4899', 
+  {
+    id: 'fiction',
+    name: 'Вымышленная',
+    description: 'Вымышленные вселенные: книги, фильмы, игры',
+    color: '#ec4899',
     icon: '📚',
     protected: false,
   },
-  { 
-    id: 'marvel', 
-    name: 'MARVEL', 
-    description: 'Вселенная Marvel: супергерои, события, эпохи', 
-    color: '#e62429', 
+  {
+    id: 'marvel',
+    name: 'MARVEL',
+    description: 'Вселенная Marvel: супергерои, события, эпохи',
+    color: '#e62429',
     icon: '🦸',
     protected: false,
   },
@@ -910,10 +926,23 @@ function isInUniverse(item, universeId) {
 }
 
 function filterByUniverse(items, universeId) {
+  // main = вся "реальная" история (без кастомных вселенных)
   if (!universeId || universeId === DEFAULT_UNIVERSE.id) {
-    // For main universe, show items without universe field or with universe='main'
     return items.filter(item => !item.universe || item.universe === DEFAULT_UNIVERSE.id);
   }
+  // Казахстан = items реальной истории с тегом kz
+  if (universeId === 'kz') {
+    return items.filter(item =>
+      (!item.universe || item.universe === DEFAULT_UNIVERSE.id) && item.tags.includes('kz')
+    );
+  }
+  // Мировая = items реальной истории без тега kz
+  if (universeId === 'world') {
+    return items.filter(item =>
+      (!item.universe || item.universe === DEFAULT_UNIVERSE.id) && !item.tags.includes('kz')
+    );
+  }
+  // Кастомные вселенные
   return items.filter(item => item.universe === universeId);
 }
 
@@ -977,6 +1006,21 @@ function deleteUniverseFromMeta(universeId) {
   refreshUniverseMeta();
   console.log('[Data] Deleted universe:', deleted);
   return { success: true, deletedUniverse: deleted };
+}
+
+/**
+ * Union-filter по нескольким вселенным (Set<string>)
+ */
+function filterByUniverses(items, universeIds) {
+  if (!universeIds || universeIds.size === 0) return [];
+  const seen = new Set();
+  const result = [];
+  for (const uid of universeIds) {
+    for (const item of filterByUniverse(items, uid)) {
+      if (!seen.has(item.id)) { seen.add(item.id); result.push(item); }
+    }
+  }
+  return result;
 }
 
 /**
@@ -1074,6 +1118,7 @@ Object.assign(window, {
   setUniverseId,
   isInUniverse,
   filterByUniverse,
+  filterByUniverses,
   createUniverse,
   updateUniverse,
   deleteUniverseFromMeta,

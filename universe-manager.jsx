@@ -454,14 +454,14 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
 // Universe Management Panel (dropdown extension)
 // ============================================================
 
-function UniverseManagerPanel({ 
-  currentUniverse, 
-  universes, 
+function UniverseManagerPanel({
+  activeUniverses,
+  universes,
   items,
-  onCreate, 
-  onEdit, 
+  onCreate,
+  onEdit,
   onDelete,
-  onSwitch,
+  onToggle,
 }) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -498,11 +498,7 @@ function UniverseManagerPanel({
       onDelete(deletingUniverse.id);
       setDeleteModalOpen(false);
       setDeletingUniverse(null);
-      
-      // Switch to main universe if current was deleted
-      if (currentUniverse === deletingUniverse.id) {
-        onSwitch(window.DEFAULT_UNIVERSE.id);
-      }
+      // App handles activeUniverses cleanup on delete
     }
   };
 
@@ -511,18 +507,24 @@ function UniverseManagerPanel({
   return (
     <>
       {/* Universe list with management options */}
-      <div className="universe-dropdown-header">Вселенные</div>
+      <div className="universe-dropdown-header">
+        <span>Коллекции</span>
+        <span className="universe-dropdown-hint">можно выбрать несколько</span>
+      </div>
       
       {universes.map(u => {
-        const isProtected = isMainUniverse(u.id);
-        const itemCount = items.filter(item => item.universe === u.id || (!item.universe && u.id === 'main')).length;
-        
+        const isProtected = u.protected === true || isMainUniverse(u.id);
+        const isActive = activeUniverses && activeUniverses.has(u.id);
+        const itemCount = window.filterByUniverse
+          ? window.filterByUniverse(items, u.id).length
+          : items.filter(item => item.universe === u.id || (!item.universe && u.id === 'main')).length;
+
         return (
           <div key={u.id} className="universe-option-wrapper">
             <button
               className="universe-option"
-              data-active={u.id === currentUniverse}
-              onClick={() => { onSwitch(u.id); }}
+              data-active={isActive}
+              onClick={() => onToggle(u.id)}
             >
               <span className="universe-option-icon">{u.icon}</span>
               <div className="universe-option-body">
@@ -534,7 +536,7 @@ function UniverseManagerPanel({
               </div>
               <div className="universe-option-meta">
                 <span className="universe-item-count">{itemCount}</span>
-                {u.id === currentUniverse && (
+                {isActive && (
                   <svg className="universe-option-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M13 4L6 11l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>

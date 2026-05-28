@@ -18,13 +18,13 @@ function DetailPanel({ item, onClose, onSelect, allItems }) {
   const primaryTag = window.primaryTagOf(cur);
   const color = primaryTag?.color || 'var(--text-2)';
 
-  const isPerson = cur.kind === 'person';
-  const isPeriod = cur.kind === 'period';
+  const isSubject = cur.kind === 'subject';
+  const isEra = cur.kind === 'era';
 
   const title = cur.name;
   const yrs = (() => {
     const [s, e] = window.itemRange(cur);
-    if (isPerson) return cur.lifeSpan || `${window.formatYearShort(s)} — ${window.formatYearShort(e)}`;
+    if (isSubject && cur.lifeSpan) return cur.lifeSpan;
     if (s === e) return window.formatYear(s);
     return `${window.formatYearShort(s)} — ${window.formatYearShort(e)}`;
   })();
@@ -33,7 +33,7 @@ function DetailPanel({ item, onClose, onSelect, allItems }) {
   const region = window.itemRegion(cur) === 'kz' ? 'Казахстан' : 'Мир';
 
   const [s, e] = window.itemRange(cur);
-  const facts = isPerson
+  const facts = isSubject
     ? allItems
         .filter(o => o.kind === 'event' && o.start >= cur.start && o.start <= cur.end)
         .filter(o => window.itemRegion(o) === window.itemRegion(cur) || o.tags.includes('event'))
@@ -55,8 +55,8 @@ function DetailPanel({ item, onClose, onSelect, allItems }) {
         </div>
         <h2 className="detail-title">{title}</h2>
         <div className="detail-meta">
-          <div><span style={{ color: 'var(--text-3)' }}>{isPerson ? 'Годы жизни' : isPeriod ? 'Период' : 'Год'}</span>{' '}<span className="val">{yrs}</span></div>
-          {isPeriod && (
+          <div><span style={{ color: 'var(--text-3)' }}>{isSubject ? 'Годы жизни' : isEra ? 'Период' : 'Год'}</span>{' '}<span className="val">{yrs}</span></div>
+          {isEra && (
             <div><span style={{ color: 'var(--text-3)' }}>Длительность</span>{' '}<span className="val">{Math.abs(e - s)} лет</span></div>
           )}
         </div>

@@ -125,7 +125,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 
 // ===== главный компонент =====
 function Timeline({
-  items, activeTags, activeKinds, activeSubkinds, showWorld, selected, onSelect,
+  items, activeTags, activeKinds, activeSubkinds, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
   rowHeight, showConnections, enablePresentBuffer = true,
 }) {
@@ -153,59 +153,55 @@ function Timeline({
   const filtered = useMemo(() =>
     items.filter(it =>
       window.isItemVisible(it, activeTags) &&
-      (showWorld || window.itemRegion(it) === 'kz') &&
       (!activeKinds || activeKinds.has(it.kind)) &&
       (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
     ),
-    [items, activeTags, activeKinds, activeSubkinds, showWorld]);
+    [items, activeTags, activeKinds, activeSubkinds]);
 
-  // -- packing lanes per region/track  --
+  // -- packing lanes per track --
   // зависит от viewport: при широком зуме события нужно разводить по lanes
   // чтобы лейблы не слипались
   const layout = useMemo(() => {
-    const regions = { kz: {}, world: {} };
+    const tracks = {};
     for (const it of filtered) {
       const t = trackOfItem(it);
       if (t < 0) continue;
-      const reg = window.itemRegion(it);
-      regions[reg][t] = regions[reg][t] || [];
-      regions[reg][t].push(it);
+      tracks[t] = tracks[t] || [];
+      tracks[t].push(it);
     }
     const viewSpan = Math.max(1, viewEnd - viewStart);
     const yearsPerPx = viewSpan / Math.max(200, size.w);
-    const trackMaxLanes = { kz: {}, world: {} };
+    const trackMaxLanes = {};
     const itemLanes = new Map();
-    for (const region of ['kz', 'world']) {
-      for (let t = 0; t < NUM_TRACKS; t++) {
-        const arr = (regions[region][t] || []).slice();
-        arr.sort((a, b) => window.itemRange(a)[0] - window.itemRange(b)[0]);
-        const lanes = [];
-        for (const it of arr) {
-          const [s, e] = window.itemRange(it);
-          // pixel-aware минимум: события 130px, личности 8px, периоды 4px
-          const minPx = it.kind === 'event' ? 130 : (it.kind === 'person' ? 12 : 4);
-          const minYearsByPx = minPx * yearsPerPx;
-          const minSpan = it.kind === 'event' ? Math.max(40, minYearsByPx)
-                        : it.kind === 'person' ? Math.max(10, minYearsByPx)
-                        : Math.max(4, minYearsByPx);
-          const visualSpan = Math.max(e, s + minSpan) - s;
-          const eVisual = s + visualSpan;
-          let placed = false;
-          for (let i = 0; i < lanes.length; i++) {
-            if (lanes[i] + (yearsPerPx * 4) <= s) {
-              itemLanes.set(it.id, i);
-              lanes[i] = eVisual;
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            itemLanes.set(it.id, lanes.length);
-            lanes.push(eVisual);
+    for (let t = 0; t < NUM_TRACKS; t++) {
+      const arr = (tracks[t] || []).slice();
+      arr.sort((a, b) => window.itemRange(a)[0] - window.itemRange(b)[0]);
+      const lanes = [];
+      for (const it of arr) {
+        const [s, e] = window.itemRange(it);
+        // pixel-aware минимум: события 130px, субъекты 12px, эпохи 4px
+        const minPx = it.kind === 'event' ? 130 : (it.kind === 'subject' ? 12 : 4);
+        const minYearsByPx = minPx * yearsPerPx;
+        const minSpan = it.kind === 'event' ? Math.max(40, minYearsByPx)
+                      : it.kind === 'subject' ? Math.max(10, minYearsByPx)
+                      : Math.max(4, minYearsByPx);
+        const visualSpan = Math.max(e, s + minSpan) - s;
+        const eVisual = s + visualSpan;
+        let placed = false;
+        for (let i = 0; i < lanes.length; i++) {
+          if (lanes[i] + (yearsPerPx * 4) <= s) {
+            itemLanes.set(it.id, i);
+            lanes[i] = eVisual;
+            placed = true;
+            break;
           }
         }
-        trackMaxLanes[region][t] = lanes.length;
+        if (!placed) {
+          itemLanes.set(it.id, lanes.length);
+          lanes.push(eVisual);
+        }
       }
+      trackMaxLanes[t] = lanes.length || 1;
     }
     return { trackMaxLanes, itemLanes };
   }, [filtered, viewStart, viewEnd, size.w]);
@@ -216,48 +212,33 @@ function Timeline({
     [viewStart, viewEnd, size.w, scaleMode]);
 
   // -- axisY и Y items --
-  // вычисляем суммарную высоту regionов
-  const kzLanesTotal = useMemo(() => {
+  const totalLanesAll = useMemo(() => {
     let sum = 0;
-    for (let t = 0; t < NUM_TRACKS; t++) sum += (layout.trackMaxLanes.kz[t] || 0);
-    return sum;
-  }, [layout]);
-  const worldLanesTotal = useMemo(() => {
-    let sum = 0;
-    for (let t = 0; t < NUM_TRACKS; t++) sum += (layout.trackMaxLanes.world[t] || 0);
+    for (let t = 0; t < NUM_TRACKS; t++) sum += (layout.trackMaxLanes[t] || 1);
     return sum;
   }, [layout]);
 
-  const kzPxHeight = kzLanesTotal * ROW + (NUM_TRACKS - 1) * TRACK_GAP;
-  const worldPxHeight = worldLanesTotal * ROW + (NUM_TRACKS - 1) * TRACK_GAP;
-  const totalPxHeight = kzPxHeight + worldPxHeight + 2 * REGION_GAP + 24;
+  const contentPxHeight = totalLanesAll * ROW + (NUM_TRACKS - 1) * TRACK_GAP;
+  const totalPxHeight = contentPxHeight + AXIS_BUFFER + 48;
 
-  // Vertical scroll boundaries and soft limits
-  const maxScrollY = Math.max(0, totalPxHeight - size.h + 100);
+  // Vertical scroll boundaries
+  const maxScrollY = Math.max(0, totalPxHeight - size.h + 80);
   const scrollMinLimit = -50;
   const scrollMaxLimit = maxScrollY + 50;
   const clampedScrollY = Math.max(scrollMinLimit, Math.min(scrollMaxLimit, scrollY));
 
-  let axisY;
-  if (totalPxHeight <= size.h) {
-    axisY = (size.h - totalPxHeight) / 2 + kzPxHeight + REGION_GAP;
-  } else {
-    // если контент не влезает — ось по центру, излишки уходят за edges (скроллятся)
-    axisY = size.h / 2;
-  }
+  // Ось внизу контента, центрированного по экрану
+  const axisY = totalPxHeight <= size.h
+    ? (size.h - contentPxHeight - AXIS_BUFFER - 48) / 2 + contentPxHeight + AXIS_BUFFER
+    : size.h - 60;
 
   const itemY = useCallback((item) => {
     const t = trackOfItem(item); if (t < 0) return 0;
     const lane = layout.itemLanes.get(item.id) || 0;
-    const reg = window.itemRegion(item);
     let baseOffset = 0;
-    for (let i = 0; i < t; i++) baseOffset += (layout.trackMaxLanes[reg][i] || 0);
+    for (let i = 0; i < t; i++) baseOffset += (layout.trackMaxLanes[i] || 1);
     const trackGap = t * TRACK_GAP;
-    if (reg === 'kz') {
-      return axisY - REGION_GAP - (baseOffset + lane + 1) * ROW - trackGap;
-    } else {
-      return axisY + REGION_GAP + (baseOffset + lane) * ROW + trackGap;
-    }
+    return axisY - AXIS_BUFFER - (baseOffset + lane + 1) * ROW - trackGap;
   }, [layout, axisY, ROW]);
 
   // -- ticks --
@@ -612,8 +593,7 @@ function Timeline({
       <div className="tl-scroll-boundary-bottom"></div>
       
       <div className="tl-bg" style={{ background: `linear-gradient(to bottom, transparent calc(${axisY}px - 1px), var(--line-strong) calc(${axisY}px - 1px), var(--line-strong) calc(${axisY}px + 1px), transparent calc(${axisY}px + 1px))` }}></div>
-      <div className="tl-region-tint kz" style={{ top: 0, height: axisY }}></div>
-      <div className="tl-region-tint world" style={{ top: axisY, bottom: 0, height: 'auto', display: showWorld ? '' : 'none' }}></div>
+      <div className="tl-region-tint" style={{ top: 0, bottom: 0 }}></div>
 
       {/* ось */}
       <div className="tl-axis" style={{ top: axisY }}>
@@ -691,22 +671,6 @@ function Timeline({
         </>
       )}
 
-      {/* регионы — лейблы */}
-      <div className="tl-region-label-wrap kz">
-        <span className="tl-region-label">
-          <span className="dot" style={{ background: 'var(--c-state)' }}></span>
-          КАЗАХСТАН
-        </span>
-      </div>
-      {showWorld && (
-        <div className="tl-region-label-wrap world">
-          <span className="tl-region-label">
-            <span className="dot" style={{ background: 'var(--c-era)' }}></span>
-            ВСЕМИРНАЯ ИСТОРИЯ
-          </span>
-        </div>
-      )}
-
       {/* items */}
       {filtered.map(renderItem)}
 
@@ -747,9 +711,6 @@ function Timeline({
           maxScrollY={maxScrollY}
           totalHeight={totalPxHeight}
           viewportHeight={size.h}
-          kzHeight={kzPxHeight}
-          worldHeight={worldPxHeight}
-          showWorld={showWorld}
           onScroll={(newScrollY) => setScrollY(newScrollY)}
         />
       )}
@@ -797,7 +758,7 @@ function Timeline({
           <div className="tl-tooltip-yrs">
             {(() => {
               const [s, e] = window.itemRange(hover.item);
-              if (hover.item.kind === 'person') return hover.item.lifeSpan;
+              if (hover.item.kind === 'subject' && hover.item.lifeSpan) return hover.item.lifeSpan;
               if (s === e) return window.formatYear(s);
               return `${window.formatYearShort(s)} — ${window.formatYearShort(e)}`;
             })()}
@@ -960,27 +921,18 @@ function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, on
 }
 
 // ===== Vertical Scroll Indicator =====
-function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHeight, kzHeight, worldHeight, showWorld, onScroll }) {
+function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHeight, onScroll }) {
   const trackRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [dragStartScrollY, setDragStartScrollY] = useState(0);
-  const [hoveredRegion, setHoveredRegion] = useState(null);
 
   const scrollableHeight = Math.max(0, totalHeight - viewportHeight);
   const thumbHeight = Math.max(20, (viewportHeight / totalHeight) * viewportHeight);
-  const trackHeight = viewportHeight - 40; // Padding top and bottom
+  const trackHeight = viewportHeight - 40;
   const thumbMaxPosition = trackHeight - thumbHeight;
-  
-  // Calculate thumb position (0 to 1 range of scroll)
   const scrollProgress = scrollableHeight > 0 ? scrollY / scrollableHeight : 0;
   const thumbTop = 20 + scrollProgress * thumbMaxPosition;
-  
-  // Calculate which tracks are currently visible
-  const viewTop = scrollY;
-  const viewBottom = scrollY + viewportHeight;
-  const kzCenter = kzHeight / 2;
-  const worldCenter = kzHeight + 2 * REGION_GAP + worldHeight / 2;
 
   const handlePointerDown = (e) => {
     e.stopPropagation();
@@ -993,66 +945,23 @@ function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHei
 
   const handlePointerMove = (e) => {
     if (!isDragging || !trackRef.current) return;
-    const rect = trackRef.current.getBoundingClientRect();
     const deltaY = e.clientY - dragStartY;
     const deltaScroll = (deltaY / trackHeight) * scrollableHeight;
-    let newScrollY = dragStartScrollY + deltaScroll;
-    // Clamp to boundaries
-    newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
-    onScroll(newScrollY);
+    onScroll(Math.max(0, Math.min(maxScrollY, dragStartScrollY + deltaScroll)));
   };
 
-  const handlePointerUp = (e) => {
-    setIsDragging(false);
-  };
+  const handlePointerUp = () => setIsDragging(false);
 
   const handleClick = (e) => {
     if (e.target.closest('.tl-vscroll-thumb')) return;
     const rect = trackRef.current.getBoundingClientRect();
-    const clickY = e.clientY - rect.top - 20; // Account for padding
-    const clickProgress = Math.max(0, Math.min(1, clickY / trackHeight));
-    const newScrollY = clickProgress * scrollableHeight;
-    onScroll(Math.max(0, Math.min(maxScrollY, newScrollY)));
+    const clickProgress = Math.max(0, Math.min(1, (e.clientY - rect.top - 20) / trackHeight));
+    onScroll(Math.max(0, Math.min(maxScrollY, clickProgress * scrollableHeight)));
   };
-
-  // Track labels - show which section is visible
-  const visibleKzStart = scrollY;
-  const visibleKzEnd = scrollY + viewportHeight;
-  const kzVisible = visibleKzEnd > 0 && visibleKzStart < kzHeight;
-  const worldVisible = showWorld && (visibleKzEnd > kzHeight + 2 * REGION_GAP || visibleKzEnd > totalHeight - worldHeight);
 
   return (
     <div className="tl-vscroll-container">
-      <div 
-        className="tl-vscroll-track" 
-        ref={trackRef}
-        onClick={handleClick}
-      >
-        {/* Region indicators */}
-        <div 
-          className={`tl-vscroll-region kz-region ${hoveredRegion === 'kz' ? 'hovered' : ''}`}
-          style={{ 
-            top: 20, 
-            height: Math.min(thumbMaxPosition, (kzHeight / totalHeight) * trackHeight) 
-          }}
-          title="Казахстан: эпохи, события, субъекты"
-          onMouseEnter={() => setHoveredRegion('kz')}
-          onMouseLeave={() => setHoveredRegion(null)}
-        />
-        {showWorld && (
-          <div 
-            className={`tl-vscroll-region world-region ${hoveredRegion === 'world' ? 'hovered' : ''}`}
-            style={{ 
-              top: 20 + (kzHeight / totalHeight) * trackHeight + (2 * REGION_GAP / totalHeight) * trackHeight,
-              height: Math.min(thumbMaxPosition, (worldHeight / totalHeight) * trackHeight)
-            }}
-            title="Всемирная история: эпохи, события, субъекты"
-            onMouseEnter={() => setHoveredRegion('world')}
-            onMouseLeave={() => setHoveredRegion(null)}
-          />
-        )}
-        
-        {/* Scroll thumb */}
+      <div className="tl-vscroll-track" ref={trackRef} onClick={handleClick}>
         <div
           className="tl-vscroll-thumb"
           style={{ top: thumbTop, height: thumbHeight }}
@@ -1063,35 +972,6 @@ function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHei
           title="Перетащите для прокрутки"
         />
       </div>
-      
-      {/* Current position indicator */}
-      <div className="tl-vscroll-indicator">
-        {scrollableHeight > 0 && (
-          <>
-            <span className="tl-vscroll-label">
-              {scrollProgress < 0.1 ? '↑ Начало' : scrollProgress > 0.9 ? '↓ Конец' : ''}
-            </span>
-            {kzVisible && (
-              <span 
-                className="tl-vscroll-region-label kz"
-                onMouseEnter={() => setHoveredRegion('kz')}
-                onMouseLeave={() => setHoveredRegion(null)}
-              >
-                {viewBottom < kzHeight / 2 ? '↑ Эпохи' : viewTop > kzHeight / 2 ? '↓ Субъекты' : 'События'}
-              </span>
-            )}
-            {worldVisible && showWorld && (
-              <span 
-                className="tl-vscroll-region-label world"
-                onMouseEnter={() => setHoveredRegion('world')}
-                onMouseLeave={() => setHoveredRegion(null)}
-              >
-                {viewTop > worldCenter ? '↓ Субъекты' : 'События'}
-              </span>
-            )}
-          </>
-        )}
-      </div>
     </div>
   );
 }
@@ -1099,7 +979,7 @@ function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHei
 // ===== Minimap =====
 // Uses MINIMAP_MIN/MINIMAP_MAX constants defined at top of file
 
-function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, activeSubkinds, enablePresentBuffer = true }) {
+function Minimap({ items, viewStart, viewEnd, setView, activeKinds, activeSubkinds, enablePresentBuffer = true }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
 
@@ -1117,7 +997,6 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
   const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MINIMAP_MIN || ep.end >= MINIMAP_MIN);
 
   const visibleItems = items.filter(it =>
-    (showWorld || window.itemRegion(it) === 'kz') &&
     (!activeKinds || activeKinds.has(it.kind)) &&
     (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
   );

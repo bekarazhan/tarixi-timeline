@@ -435,6 +435,9 @@ button { font-family: inherit; }
 }
 
 .universe-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 12px;
   background: var(--bg-3);
   border-bottom: 1px solid var(--line);
@@ -444,11 +447,19 @@ button { font-family: inherit; }
   letter-spacing: 0.05em;
   color: var(--text-3);
 }
+.universe-dropdown-hint {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-3);
+  opacity: 0.7;
+}
 
 .universe-option {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 10px 12px;
   background: transparent;
   border: none;
@@ -456,6 +467,7 @@ button { font-family: inherit; }
   text-align: left;
   cursor: pointer;
   transition: background 0.15s ease;
+  color: inherit;
 }
 
 .universe-option:hover {
@@ -463,13 +475,15 @@ button { font-family: inherit; }
 }
 
 .universe-option[data-active="true"] {
-  background: var(--bg-3);
+  background: color-mix(in oklab, var(--accent, #38bdf8) 8%, var(--bg-2));
+  box-shadow: inset 2px 0 0 var(--accent, #38bdf8);
 }
 
 .universe-option-icon {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .universe-option-body {
@@ -2240,3 +2254,329 @@ button { font-family: inherit; }
 }
 .legend-tag-ok:disabled { opacity: 0.35; cursor: default; }
 .legend-tag-ok:not(:disabled):hover { opacity: 0.85; }
+
+/* ══════════════════════════════════════════════════════
+   UNIVERSE MANAGER — dropdown list + management
+   ══════════════════════════════════════════════════════ */
+
+/* Wrapper — needed for hover-reveal of edit/delete buttons */
+.universe-option-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+}
+.universe-option-wrapper:last-of-type {
+  border-bottom: none;
+}
+
+/* Override option button inside wrapper */
+.universe-option-wrapper .universe-option {
+  padding-right: 52px; /* room for manage buttons */
+}
+
+/* Manage actions — absolutely overlaid on right side */
+.universe-manage-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+.universe-option-wrapper:hover .universe-manage-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.universe-manage-btn {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-3);
+  transition: all 0.12s;
+}
+.universe-manage-btn:hover { color: var(--text-1); border-color: var(--line-strong); }
+.universe-manage-btn.delete:hover { color: #ef5a6a; border-color: #ef5a6a; background: color-mix(in oklab, #ef5a6a 12%, var(--bg-3)); }
+
+/* Meta — count + checkmark on the right of the option */
+.universe-option-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.universe-item-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.universe-option-check {
+  color: var(--accent, #38bdf8);
+  flex-shrink: 0;
+}
+
+/* "основная" badge — inline pill next to name */
+.universe-protected-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: color-mix(in oklab, var(--accent, #38bdf8) 15%, transparent);
+  border: 1px solid color-mix(in oklab, var(--accent, #38bdf8) 35%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent, #38bdf8);
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
+/* "Создать вселенную" button */
+.universe-create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--line);
+  color: var(--text-2);
+  font: 500 13px var(--font-ui);
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: left;
+}
+.universe-create-btn:hover {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+.universe-create-btn svg {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   UNIVERSE EDIT / DELETE MODALS
+   ══════════════════════════════════════════════════════ */
+
+.universe-edit-modal,
+.universe-delete-modal {
+  max-width: 400px;
+}
+
+/* Live preview at top of create/edit form */
+.universe-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-3);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+.universe-preview-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.universe-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.universe-preview-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-0);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universe-preview-desc {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Icon selector ─────────────────────────────── */
+.icon-selector {
+  position: relative;
+}
+
+.icon-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-s);
+  color: var(--text-1);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.icon-selector-btn:hover { border-color: var(--text-3); }
+
+.icon-selector-current { font-size: 18px; line-height: 1; }
+.icon-selector-arrow { font-size: 10px; color: var(--text-3); }
+
+.emoji-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-m);
+  box-shadow: var(--shadow-pop);
+  z-index: 100;
+  min-width: 240px;
+  overflow: hidden;
+}
+
+.emoji-picker-categories {
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-3);
+  flex-wrap: wrap;
+}
+
+.emoji-cat-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.emoji-cat-btn:hover { background: var(--bg-2); }
+.emoji-cat-btn.active { background: var(--bg-2); border-color: var(--line-strong); }
+
+.emoji-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 6px;
+}
+
+.emoji-btn {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.emoji-btn:hover { background: var(--bg-3); }
+.emoji-btn.active { background: var(--bg-3); border-color: var(--line-strong); }
+
+/* ── Color picker ──────────────────────────────── */
+.color-picker {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.color-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.1s;
+  flex-shrink: 0;
+}
+.color-btn:hover { transform: scale(1.15); }
+.color-btn.active {
+  border-color: var(--bg-0);
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.color-custom {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  overflow: hidden;
+}
+.color-custom::-webkit-color-swatch-wrapper { padding: 0; }
+.color-custom::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+/* ── Delete confirmation ───────────────────────── */
+.delete-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.delete-warning h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-0);
+}
+
+.delete-warning p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.delete-items-warning {
+  padding: 8px 12px;
+  background: color-mix(in oklab, #ef5a6a 10%, transparent);
+  border: 1px solid color-mix(in oklab, #ef5a6a 30%, transparent);
+  border-radius: var(--radius-s);
+  color: #ef5a6a !important;
+  font-size: 12px !important;
+  width: 100%;
+  box-sizing: border-box;
+}
