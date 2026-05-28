@@ -20,12 +20,24 @@ function trackOfItem(item) {
 }
 
 const GLOBAL_MIN = -42000;
-const GLOBAL_MAX = 2030;
+const GLOBAL_MAX = 2500;        // Extended to 2500 for expansive future exploration
 const MIN_SPAN = 8;
 const MAX_SPAN = GLOBAL_MAX - GLOBAL_MIN;
 // Minimap range - used for synchronized zoom handles and minimap window
 const MINIMAP_MIN = -2000;
-const MINIMAP_MAX = 2030;
+const MINIMAP_MAX = 2500;       // Extended to 2500 for future exploration space
+const CURRENT_YEAR = new Date().getFullYear();
+
+// UX: Present year positioning - present should be a reference point, not an edge
+// Present is positioned at ~30% from left in default view for natural future exploration
+const PRESENT_TARGET_POSITION = 0.30;  // Present at 30% of viewport width
+const PRESENT_BUFFER_FIXED = 50;       // Fixed 50 years after present (increased)
+const PRESENT_BUFFER_PERCENT = 0.20;   // 20% of viewport as buffer (increased)
+
+// Future visualization thresholds
+const FUTURE_NEAR_END = 2050;   // Near future: 2025-2050 (planned projects)
+const FUTURE_MID_END = 2100;    // Mid future: 2050-2100 (speculative projections)
+// Far future: 2100-2500 (abstract future space)
 const AXIS_BUFFER = 12;     // зазор между осью и первым треком
 const TRACK_GAP = 6;        // зазор между треками
 const REGION_GAP = 12;      // зазор от оси до начала региональной части
@@ -115,7 +127,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 function Timeline({
   items, activeTags, activeKinds, activeSubkinds, showWorld, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
-  rowHeight, showConnections,
+  rowHeight, showConnections, enablePresentBuffer = true,
 }) {
   const stageRef = useRef();
   const [size, setSize] = useState({ w: 1200, h: 700 });
@@ -220,6 +232,12 @@ function Timeline({
   const worldPxHeight = worldLanesTotal * ROW + (NUM_TRACKS - 1) * TRACK_GAP;
   const totalPxHeight = kzPxHeight + worldPxHeight + 2 * REGION_GAP + 24;
 
+  // Vertical scroll boundaries and soft limits
+  const maxScrollY = Math.max(0, totalPxHeight - size.h + 100);
+  const scrollMinLimit = -50;
+  const scrollMaxLimit = maxScrollY + 50;
+  const clampedScrollY = Math.max(scrollMinLimit, Math.min(scrollMaxLimit, scrollY));
+
   let axisY;
   if (totalPxHeight <= size.h) {
     axisY = (size.h - totalPxHeight) / 2 + kzPxHeight + REGION_GAP;
@@ -286,11 +304,29 @@ function Timeline({
     const dYears = -dx * span / size.w;
     let ns = dragRef.current.startViewStart + dYears;
     let ne = dragRef.current.startViewEnd + dYears;
+    
+    // UX improvement: Add breathing room when panning in modern era
+    if (ne > 1900) {
+      const buffer = Math.max(10, (ne - ns) * 0.08);
+      ne = Math.min(GLOBAL_MAX, ne + buffer);
+    }
+    
+    // UX: Present year buffer zone - prevent current year from hitting edge
+    if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
+      const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
+      if (targetEnd < GLOBAL_MAX) {
+        const neededBuffer = targetEnd - ne;
+        ns -= neededBuffer * 0.7; // Soft constraint during drag
+        ne = targetEnd;
+      }
+    }
+    
     // clamp to minimap bounds for consistency
     if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
     if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
     setView(ns, ne);
-    setScrollY(dragRef.current.startScrollY - dy);
+    // Fix: Mouse drag down should scroll down (increase scrollY), drag up should scroll up (decrease scrollY)
+    setScrollY(dragRef.current.startScrollY + dy);
   };
   const onPointerUp = (e) => {
     dragRef.current = null;
@@ -312,14 +348,35 @@ function Timeline({
       const span = viewEnd - viewStart;
       const dYears = (deltaX / size.w) * span;
       let ns = viewStart + dYears, ne = viewEnd + dYears;
+      
+      // UX improvement: Add breathing room when panning in modern era
+      if (ne > 1900) {
+        const buffer = Math.max(10, (ne - ns) * 0.08);
+        ne = Math.min(GLOBAL_MAX, ne + buffer);
+      }
+      
+      // UX: Present year buffer zone - prevent current year from hitting edge
+      if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
+        const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
+        if (targetEnd < GLOBAL_MAX) {
+          const neededBuffer = targetEnd - ne;
+          ns -= neededBuffer * 0.7; // Soft constraint during drag
+          ne = targetEnd;
+        }
+      }
+      
       // clamp to minimap bounds
       if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
       if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
       setView(ns, ne);
       return;
     }
-    // vertical scroll
-    setScrollY(s => s - e.deltaY);
+    // vertical scroll - fix direction: wheel down should scroll down (increase scrollY)
+    setScrollY(s => {
+      const newScrollY = s + e.deltaY;
+      // Clamp to boundaries with soft bounce effect
+      return Math.max(scrollMinLimit, Math.min(scrollMaxLimit, newScrollY));
+    });
   };
 
   // zoom around stage X
@@ -331,6 +388,24 @@ function Timeline({
     const yearAt = scale.xToYear(x);
     let ns = yearAt - newSpan * ratio;
     let ne = yearAt + newSpan * (1 - ratio);
+    
+    // UX improvement: Add breathing room when zoomed into modern era
+    // Prevents current year from being stuck at screen edge
+    if (ne > 1900) {
+      const buffer = Math.max(15, (ne - ns) * 0.12); // 12% buffer for modern era
+      ne = Math.min(GLOBAL_MAX, ne + buffer);
+    }
+    
+    // UX: Present year buffer zone - maintain visual breathing room after current year
+    if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
+      const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
+      if (targetEnd < GLOBAL_MAX) {
+        const neededBuffer = targetEnd - ne;
+        ns -= neededBuffer;
+        ne = targetEnd;
+      }
+    }
+    
     // clamp to minimap bounds
     if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
     if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
@@ -444,7 +519,7 @@ function Timeline({
     const [s, e] = window.itemRange(item);
     const x1 = scale.yearToX(s);
     const x2 = scale.yearToX(e);
-    const yBase = itemY(item) + scrollY;
+    const yBase = itemY(item) + clampedScrollY;
     // Всегда используем цвет области (domain) для заливки
     const domainColor = window.colorForItem(item);
     
@@ -515,6 +590,10 @@ function Timeline({
       viewStart >= ep.start - 50 && viewEnd <= ep.end + 50);
   }, [viewStart, viewEnd]);
 
+  // Determine scroll boundary states for visual feedback
+  const atTop = clampedScrollY <= scrollMinLimit + 10;
+  const atBottom = clampedScrollY >= scrollMaxLimit - 10;
+
   return (
     <div
       className="tl-stage"
@@ -525,7 +604,13 @@ function Timeline({
       onPointerCancel={onPointerUp}
       onPointerLeave={onLeave}
       onWheel={onWheel}
+      data-scroll-at-top={atTop ? 'true' : 'false'}
+      data-scroll-at-bottom={atBottom ? 'true' : 'false'}
     >
+      {/* Scroll boundary indicators */}
+      <div className="tl-scroll-boundary-top"></div>
+      <div className="tl-scroll-boundary-bottom"></div>
+      
       <div className="tl-bg" style={{ background: `linear-gradient(to bottom, transparent calc(${axisY}px - 1px), var(--line-strong) calc(${axisY}px - 1px), var(--line-strong) calc(${axisY}px + 1px), transparent calc(${axisY}px + 1px))` }}></div>
       <div className="tl-region-tint kz" style={{ top: 0, height: axisY }}></div>
       <div className="tl-region-tint world" style={{ top: axisY, bottom: 0, height: 'auto', display: showWorld ? '' : 'none' }}></div>
@@ -565,6 +650,47 @@ function Timeline({
         })}
       </div>
 
+      {/* Future visualization layers - visual distinction for future time periods */}
+      {viewEnd > CURRENT_YEAR && (
+        <>
+          {/* Near Future (2025-2050) - subtle tint */}
+          {viewEnd > CURRENT_YEAR && (
+            <div
+              className="tl-future-zone tl-future-near"
+              style={{
+                left: scale.yearToX(Math.max(CURRENT_YEAR, viewStart)),
+                width: Math.max(0, scale.yearToX(Math.min(FUTURE_NEAR_END, viewEnd)) - scale.yearToX(Math.max(CURRENT_YEAR, viewStart))),
+              }}
+              title="Ближнее будущее: период планируемых проектов и прогнозов"
+            ></div>
+          )}
+          
+          {/* Mid Future (2050-2100) - stronger tint with pattern */}
+          {viewEnd > FUTURE_NEAR_END && (
+            <div
+              className="tl-future-zone tl-future-mid"
+              style={{
+                left: scale.yearToX(Math.max(FUTURE_NEAR_END, viewStart)),
+                width: Math.max(0, scale.yearToX(Math.min(FUTURE_MID_END, viewEnd)) - scale.yearToX(Math.max(FUTURE_NEAR_END, viewStart))),
+              }}
+              title="Среднее будущее: спекулятивные прогнозы и долгосрочные планы"
+            ></div>
+          )}
+          
+          {/* Far Future (2100-2500) - abstract future space */}
+          {viewEnd > FUTURE_MID_END && (
+            <div
+              className="tl-future-zone tl-future-far"
+              style={{
+                left: scale.yearToX(Math.max(FUTURE_MID_END, viewStart)),
+                width: Math.max(0, scale.yearToX(Math.min(FUTURE_MID_END + 400, viewEnd)) - scale.yearToX(Math.max(FUTURE_MID_END, viewStart))),
+              }}
+              title="Далёкое будущее: пространство для воображения и гипотез"
+            ></div>
+          )}
+        </>
+      )}
+
       {/* регионы — лейблы */}
       <div className="tl-region-label-wrap kz">
         <span className="tl-region-label">
@@ -595,12 +721,38 @@ function Timeline({
         )}
       </div>
 
+      {/* Present Day Marker - visual anchor for current year */}
+      {enablePresentBuffer && viewEnd > CURRENT_YEAR - 50 && viewStart < CURRENT_YEAR + 50 && (
+        <div
+          className="tl-present-marker"
+          style={{ left: scale.yearToX(CURRENT_YEAR) }}
+          title={`Настоящее время: ${CURRENT_YEAR}`}
+        >
+          <div className="tl-present-line"></div>
+          <div className="tl-present-label">Present</div>
+        </div>
+      )}
+
       {/* controls */}
       <div className="tl-controls">
         <button className="tl-zoom-btn" onClick={() => zoomAt(size.w/2, 1/1.4)} title="Увеличить">+</button>
         <button className="tl-zoom-btn" onClick={() => zoomAt(size.w/2, 1.4)} title="Уменьшить">−</button>
-        <button className="tl-zoom-btn" onClick={() => setView(-1000, 2030)} title="Сбросить вид" style={{ fontSize: 12 }}>⤢</button>
+        <button className="tl-zoom-btn" onClick={() => setView(-500, 2400)} title="Сбросить вид" style={{ fontSize: 12 }}>⤢</button>
       </div>
+
+      {/* Vertical scroll indicator - shows current vertical position */}
+      {totalPxHeight > size.h && (
+        <VerticalScrollIndicator
+          scrollY={clampedScrollY}
+          maxScrollY={maxScrollY}
+          totalHeight={totalPxHeight}
+          viewportHeight={size.h}
+          kzHeight={kzPxHeight}
+          worldHeight={worldPxHeight}
+          showWorld={showWorld}
+          onScroll={(newScrollY) => setScrollY(newScrollY)}
+        />
+      )}
 
       {/* zoom handles */}
       <ZoomHandles
@@ -618,7 +770,7 @@ function Timeline({
         <div className="breadcrumb" style={{ '--c': currentEpoch.color }}>
           <span style={{ color: 'var(--text-3)' }}>эпоха:</span>
           <span className="breadcrumb-zoom" style={{ color: currentEpoch.color }}>{currentEpoch.name}</span>
-          <button onClick={() => setView(-1000, 2030)} title="Назад к обзору">×</button>
+          <button onClick={() => setView(-500, 2400)} title="Назад к обзору">×</button>
         </div>
       )}
 
@@ -627,7 +779,7 @@ function Timeline({
         <span><kbd>⇧</kbd> + scroll — пан</span>
         <span><kbd>⌘</kbd> + scroll — zoom</span>
         <span>drag — двигай</span>
-        <span>края — масштаб</span>
+        <span>wheel — ↕ треки</span>
       </div>
 
       {/* tooltip */}
@@ -807,10 +959,147 @@ function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, on
   );
 }
 
+// ===== Vertical Scroll Indicator =====
+function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHeight, kzHeight, worldHeight, showWorld, onScroll }) {
+  const trackRef = useRef();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartScrollY, setDragStartScrollY] = useState(0);
+  const [hoveredRegion, setHoveredRegion] = useState(null);
+
+  const scrollableHeight = Math.max(0, totalHeight - viewportHeight);
+  const thumbHeight = Math.max(20, (viewportHeight / totalHeight) * viewportHeight);
+  const trackHeight = viewportHeight - 40; // Padding top and bottom
+  const thumbMaxPosition = trackHeight - thumbHeight;
+  
+  // Calculate thumb position (0 to 1 range of scroll)
+  const scrollProgress = scrollableHeight > 0 ? scrollY / scrollableHeight : 0;
+  const thumbTop = 20 + scrollProgress * thumbMaxPosition;
+  
+  // Calculate which tracks are currently visible
+  const viewTop = scrollY;
+  const viewBottom = scrollY + viewportHeight;
+  const kzCenter = kzHeight / 2;
+  const worldCenter = kzHeight + 2 * REGION_GAP + worldHeight / 2;
+
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStartY(e.clientY);
+    setDragStartScrollY(scrollY);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging || !trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const deltaY = e.clientY - dragStartY;
+    const deltaScroll = (deltaY / trackHeight) * scrollableHeight;
+    let newScrollY = dragStartScrollY + deltaScroll;
+    // Clamp to boundaries
+    newScrollY = Math.max(0, Math.min(maxScrollY, newScrollY));
+    onScroll(newScrollY);
+  };
+
+  const handlePointerUp = (e) => {
+    setIsDragging(false);
+  };
+
+  const handleClick = (e) => {
+    if (e.target.closest('.tl-vscroll-thumb')) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const clickY = e.clientY - rect.top - 20; // Account for padding
+    const clickProgress = Math.max(0, Math.min(1, clickY / trackHeight));
+    const newScrollY = clickProgress * scrollableHeight;
+    onScroll(Math.max(0, Math.min(maxScrollY, newScrollY)));
+  };
+
+  // Track labels - show which section is visible
+  const visibleKzStart = scrollY;
+  const visibleKzEnd = scrollY + viewportHeight;
+  const kzVisible = visibleKzEnd > 0 && visibleKzStart < kzHeight;
+  const worldVisible = showWorld && (visibleKzEnd > kzHeight + 2 * REGION_GAP || visibleKzEnd > totalHeight - worldHeight);
+
+  return (
+    <div className="tl-vscroll-container">
+      <div 
+        className="tl-vscroll-track" 
+        ref={trackRef}
+        onClick={handleClick}
+      >
+        {/* Region indicators */}
+        <div 
+          className={`tl-vscroll-region kz-region ${hoveredRegion === 'kz' ? 'hovered' : ''}`}
+          style={{ 
+            top: 20, 
+            height: Math.min(thumbMaxPosition, (kzHeight / totalHeight) * trackHeight) 
+          }}
+          title="Казахстан: эпохи, события, субъекты"
+          onMouseEnter={() => setHoveredRegion('kz')}
+          onMouseLeave={() => setHoveredRegion(null)}
+        />
+        {showWorld && (
+          <div 
+            className={`tl-vscroll-region world-region ${hoveredRegion === 'world' ? 'hovered' : ''}`}
+            style={{ 
+              top: 20 + (kzHeight / totalHeight) * trackHeight + (2 * REGION_GAP / totalHeight) * trackHeight,
+              height: Math.min(thumbMaxPosition, (worldHeight / totalHeight) * trackHeight)
+            }}
+            title="Всемирная история: эпохи, события, субъекты"
+            onMouseEnter={() => setHoveredRegion('world')}
+            onMouseLeave={() => setHoveredRegion(null)}
+          />
+        )}
+        
+        {/* Scroll thumb */}
+        <div
+          className="tl-vscroll-thumb"
+          style={{ top: thumbTop, height: thumbHeight }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          title="Перетащите для прокрутки"
+        />
+      </div>
+      
+      {/* Current position indicator */}
+      <div className="tl-vscroll-indicator">
+        {scrollableHeight > 0 && (
+          <>
+            <span className="tl-vscroll-label">
+              {scrollProgress < 0.1 ? '↑ Начало' : scrollProgress > 0.9 ? '↓ Конец' : ''}
+            </span>
+            {kzVisible && (
+              <span 
+                className="tl-vscroll-region-label kz"
+                onMouseEnter={() => setHoveredRegion('kz')}
+                onMouseLeave={() => setHoveredRegion(null)}
+              >
+                {viewBottom < kzHeight / 2 ? '↑ Эпохи' : viewTop > kzHeight / 2 ? '↓ Субъекты' : 'События'}
+              </span>
+            )}
+            {worldVisible && showWorld && (
+              <span 
+                className="tl-vscroll-region-label world"
+                onMouseEnter={() => setHoveredRegion('world')}
+                onMouseLeave={() => setHoveredRegion(null)}
+              >
+                {viewTop > worldCenter ? '↓ Субъекты' : 'События'}
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ===== Minimap =====
 // Uses MINIMAP_MIN/MINIMAP_MAX constants defined at top of file
 
-function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, activeSubkinds }) {
+function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, activeSubkinds, enablePresentBuffer = true }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
 
@@ -882,6 +1171,49 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
             }}
           />
         ))}
+        {/* Future zones on minimap - visual structure for future exploration */}
+        {enablePresentBuffer && (
+          <>
+            {/* Near Future */}
+            <div
+              className="tl-minimap-future-near"
+              style={{
+                left: y2x(CURRENT_YEAR),
+                width: Math.max(0, y2x(FUTURE_NEAR_END) - y2x(CURRENT_YEAR)),
+              }}
+              title="Ближнее будущее: 2025-2050"
+            ></div>
+            {/* Mid Future */}
+            <div
+              className="tl-minimap-future-mid"
+              style={{
+                left: y2x(FUTURE_NEAR_END),
+                width: Math.max(0, y2x(FUTURE_MID_END) - y2x(FUTURE_NEAR_END)),
+              }}
+              title="Среднее будущее: 2050-2100"
+            ></div>
+            {/* Far Future */}
+            <div
+              className="tl-minimap-future-far"
+              style={{
+                left: y2x(FUTURE_MID_END),
+                width: Math.max(0, y2x(GLOBAL_MAX) - y2x(FUTURE_MID_END)),
+              }}
+              title="Далёкое будущее: 2100-2500"
+            ></div>
+          </>
+        )}
+        {/* Present year buffer zone indicator (overlay on near future) */}
+        {enablePresentBuffer && (
+          <div
+            className="tl-minimap-present-zone"
+            style={{
+              left: y2x(CURRENT_YEAR),
+              width: Math.max(0, y2x(CURRENT_YEAR + PRESENT_BUFFER_FIXED) - y2x(CURRENT_YEAR)),
+            }}
+            title={`Буферная зона настоящего времени: ${CURRENT_YEAR} — ${CURRENT_YEAR + PRESENT_BUFFER_FIXED}`}
+          ></div>
+        )}
         <div className="tl-minimap-track"></div>
         {visibleItems.map(it => {
           const [s, e] = window.itemRange(it);

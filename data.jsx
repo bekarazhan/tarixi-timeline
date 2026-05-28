@@ -59,10 +59,14 @@ const TAG_MAP = Object.fromEntries(TAG_CATALOG.map(t => [t.id, t]));
 // ============================================================
 
 const EPOCH_PRESETS = [
-  { id: 'ancient',  name: 'Древний мир',  start: -3000, end: 500,  color: '#5e6478' },
-  { id: 'medieval', name: 'Средние века', start:  500,  end: 1500, color: '#7a6040' },
-  { id: 'modern',   name: 'Новое время',  start:  1500, end: 1900, color: '#4a6080' },
-  { id: 'contemp',  name: 'Новейшее',     start:  1900, end: 2025, color: '#3a5a40' },
+  { id: 'ancient',   name: 'Древний мир',    start: -3000, end: 500,   color: '#5e6478' },
+  { id: 'medieval',  name: 'Средние века',   start:  500,  end: 1500,  color: '#7a6040' },
+  { id: 'modern',    name: 'Новое время',    start:  1500, end: 1900,  color: '#4a6080' },
+  { id: 'contemp',   name: 'Новейшее',       start:  1900, end: 2025,  color: '#3a5a40' },
+  // Future epochs - for navigation and visual structure
+  { id: 'near-future',  name: 'Ближнее будущее', start:  2025, end: 2050,  color: '#2d6a4f' },
+  { id: 'mid-future',   name: 'Среднее будущее', start:  2050, end: 2100,  color: '#1d5045' },
+  { id: 'far-future',   name: 'Далёкое будущее', start:  2100, end: 2500,  color: '#0f3d3e' },
 ];
 
 // ============================================================
@@ -689,6 +693,78 @@ const ALL_ITEMS = [
     tags: ['culture', 'america'],
     start: 2021, end: 2021,
     desc: 'Мультивселенная открыта. Три Человека-паука вместе. Кассовые рекорды.',
+  },
+  
+  // ── FUTURE EVENTS —示范项目 (demonstration of future timeline capability) ─────────
+  // These are speculative/projected events to demonstrate future exploration
+  
+  // Near Future (2025-2050) - Planned projects and near-term projections
+  {
+    id: 'future-artemis-mars', kind: 'event',
+    name: 'Пилотируемая миссия на Марс (план)',
+    tags: ['science', 'global'],
+    start: 2035, end: 2035,
+    desc: 'NASA и SpaceX планируют первую пилотируемую миссию на Марс в середине 2030-х годов.',
+  },
+  {
+    id: 'future-fusion-energy', kind: 'event',
+    name: 'Коммерческий термоядерный реактор (прогноз)',
+    tags: ['science', 'global'],
+    start: 2040, end: 2040,
+    desc: 'Ожидается запуск первых коммерческих термоядерных реакторов, обеспечивающих чистую энергию.',
+  },
+  {
+    id: 'future-kazakhstan-space', kind: 'event',
+    name: 'Казахстанская лунная программа',
+    tags: ['science', 'kz'],
+    start: 2045, end: 2045,
+    desc: 'Планы Казахстана по участию в международной лунной программе и запуску собственных космических аппаратов.',
+  },
+  
+  // Mid Future (2050-2100) - Speculative long-term projections
+  {
+    id: 'future-carbon-neutral', kind: 'event',
+    name: 'Глобальная углеродная нейтральность (цель)',
+    tags: ['global'],
+    start: 2050, end: 2050,
+    desc: 'Цель ООН по достижению глобальной углеродной нейтральности для ограничения изменения климата.',
+  },
+  {
+    id: 'future-mars-colony', kind: 'event',
+    name: 'Первая постоянная колония на Марсе',
+    tags: ['science', 'global'],
+    start: 2070, end: 2070,
+    desc: 'Прогнозируемое основание первой постоянной человеческой колонии на Марсе.',
+  },
+  {
+    id: 'future-ai-singularity', kind: 'event',
+    name: 'Технологическая сингулярность (гипотеза)',
+    tags: ['science', 'global'],
+    start: 2085, end: 2085,
+    desc: 'Гипотетический момент, когда ИИ превзойдёт человеческий интеллект во всех областях.',
+  },
+  
+  // Far Future (2100-2500) - Abstract future space, highly speculative
+  {
+    id: 'future-interstellar', kind: 'event',
+    name: 'Первая межзвёздная экспедиция',
+    tags: ['science', 'global'],
+    start: 2150, end: 2150,
+    desc: 'Гипотетическая отправка первого межзвёздного корабля к ближайшим звёздным системам.',
+  },
+  {
+    id: 'future-type1-civilization', kind: 'event',
+    name: 'Цивилизация I типа по Кардашёву',
+    tags: ['global'],
+    start: 2300, end: 2300,
+    desc: 'Прогноз достижения человечеством статуса цивилизации I типа — полное использование энергии своей планеты.',
+  },
+  {
+    id: 'future-mars-terraforming', kind: 'event',
+    name: 'Начало терраформирования Марса',
+    tags: ['science', 'global'],
+    start: 2400, end: 2400,
+    desc: 'Гипотетическое начало масштабного проекта по изменению атмосферы Марса для пригодности к жизни.',
   },
 ];
 

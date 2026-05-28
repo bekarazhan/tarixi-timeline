@@ -371,7 +371,10 @@ function App() {
   const [activeTags, setActiveTags] = useState(() =>
     new Set(window.TAG_CATALOG.map(t => t.id))
   );
-  const [view, setViewState] = useState({ start: -500, end: 2030 });
+  // UX: Default view positions present year (~2026) at ~30% from left
+  // This creates an expansive feel with room to explore the future
+  // View span: -500 to 2400 = 2900 years, present at (2026-(-500))/2900 ≈ 30%
+  const [view, setViewState] = useState({ start: -500, end: 2400 });
   const [legendHidden, setLegendHidden] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [items, setItems] = useState(() => window.ALL_ITEMS);
@@ -435,7 +438,7 @@ function App() {
     const span = view.end - view.start;
     if (mid < view.start || mid > view.end) {
       const ns = Math.max(-42000, mid - span / 2);
-      const ne = Math.min(2030, mid + span / 2);
+      const ne = Math.min(2500, mid + span / 2);  // Updated to match new GLOBAL_MAX
       setView(ns, ne);
     }
   }, [view, setView]);
@@ -548,6 +551,7 @@ function App() {
             setView={setView}
             rowHeight={rowHeight}
             showConnections={t.showConnections}
+            enablePresentBuffer={t.presentBuffer !== false}
           />
           {t.showMinimap && (
             <window.Minimap
@@ -606,6 +610,11 @@ function App() {
           label="Мини-карта"
           value={t.showMinimap}
           onChange={(v) => setTweak('showMinimap', v)}
+        />
+        <window.TweakToggle
+          label="Буфер настоящего"
+          value={t.presentBuffer !== false}
+          onChange={(v) => setTweak('presentBuffer', v)}
         />
 
         <window.TweakSection label="Быстрая навигация по эпохам" />

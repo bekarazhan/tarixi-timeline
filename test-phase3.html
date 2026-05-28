@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phase 3 Test - Universe Management</title>
+<style>
+  body {
+    background: #0c0e15;
+    color: #c6cad8;
+    font-family: 'Manrope', system-ui, sans-serif;
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 { color: #f5f6fa; margin-bottom: 10px; }
+  h2 { color: #8b91a4; font-size: 18px; margin-top: 30px; }
+  .test-section {
+    background: #11141d;
+    border: 1px solid #232838;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+  }
+  .test-btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 5px;
+  }
+  .test-btn:hover { opacity: 0.9; }
+  .test-btn.danger { background: #ef4444; }
+  .test-btn.success { background: #22c55e; }
+  .log {
+    background: #07080c;
+    border: 1px solid #232838;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Fragment Mono', monospace;
+    font-size: 12px;
+    color: #5cd4ec;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 15px;
+  }
+  .log-item {
+    margin: 5px 0;
+    padding: 5px;
+    border-bottom: 1px solid #181c28;
+  }
+  .status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+  }
+  .status.ok { background: #22c55e33; color: #22c55e; }
+  .status.error { background: #ef444433; color: #ef4444; }
+  .feature-list {
+    list-style: none;
+    padding: 0;
+  }
+  .feature-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #181c28;
+  }
+  .feature-list li:before {
+    content: "✓";
+    color: #22c55e;
+    margin-right: 10px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <h1>Phase 3: Content Management Test</h1>
+  <p>Testing universe CRUD operations and localStorage persistence</p>
+
+  <div class="test-section">
+    <h2>📋 Features Implemented</h2>
+    <ul class="feature-list">
+      <li>Create New Universe - Add custom universes with name, description, icon, color</li>
+      <li>Edit Existing Universes - Modify universe properties (except 'main')</li>
+      <li>Delete Universes - Remove custom universes with confirmation</li>
+      <li>Universe-Specific Content - Filter items by universe</li>
+      <li>Universe Statistics - Show item counts by type in legend</li>
+      <li>Persistence - Save/load custom universes from localStorage</li>
+      <li>Protected 'main' Universe - Cannot be edited or deleted</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>🧪 Manual Tests</h2>
+    <p>Open <strong>index.html</strong> in your browser and test:</p>
+    <ol>
+      <li>Click the universe selector in the header (shows current universe)</li>
+      <li>Click "Создать вселенную" to create a new custom universe</li>
+      <li>Fill in name, description, select icon and color</li>
+      <li>Switch between universes using the dropdown</li>
+      <li>Edit a custom universe (hover to see edit/delete buttons)</li>
+      <li>Delete a custom universe (confirmation modal appears)</li>
+      <li>Check legend panel for universe statistics</li>
+      <li>Refresh page to verify persistence</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>🔧 Console Tests</h2>
+    <button class="test-btn" onclick="testLoadUniverse()">Load Universes</button>
+    <button class="test-btn" onclick="testCreateUniverse()">Create Test Universe</button>
+    <button class="test-btn" onclick="testUpdateUniverse()">Update Universe</button>
+    <button class="test-btn danger" onclick="testDeleteUniverse()">Delete Test Universe</button>
+    <button class="test-btn success" onclick="testClearStorage()">Clear Storage</button>
+    
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>📊 Current State</h2>
+    <div id="state"></div>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const stateEl = document.getElementById('state');
+    
+    function log(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      if (type === 'error') div.style.color = '#ef4444';
+      if (type === 'success') div.style.color = '#22c55e';
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateState() {
+      try {
+        const stored = localStorage.getItem('tarixi-timeline-universes');
+        const custom = stored ? JSON.parse(stored) : [];
+        stateEl.innerHTML = `
+          <p><strong>Custom universes in storage:</strong> ${custom.length}</p>
+          <p><strong>Storage key:</strong> tarixi-timeline-universes</p>
+          ${custom.length > 0 ? `
+            <p><strong>Universes:</strong></p>
+            <ul>
+              ${custom.map(u => `<li>${u.icon} ${u.name} (${u.id})</li>`).join('')}
+            </ul>
+          ` : '<p><em>No custom universes yet</em></p>'}
+        `;
+      } catch (e) {
+        stateEl.innerHTML = `<p style="color: #ef4444">Error: ${e.message}</p>`;
+      }
+    }
+
+    function testLoadUniverse() {
+      try {
+        const stored = localStorage.getItem('tarixi-timeline-universes');
+        const custom = stored ? JSON.parse(stored) : [];
+        log(`Loaded ${custom.length} custom universes`, 'success');
+        log(`Universes: ${custom.map(u => u.name).join(', ') || 'none'}`);
+        updateState();
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    function testCreateUniverse() {
+      try {
+        const testUniverse = {
+          name: 'Test Universe ' + Date.now(),
+          description: 'Automated test universe',
+          icon: '🧪',
+          color: '#22c55e',
+        };
+        
+        const custom = JSON.parse(localStorage.getItem('tarixi-timeline-universes') || '[]');
+        const newUniverse = {
+          ...testUniverse,
+          id: 'custom-' + Date.now(),
+          createdAt: new Date().toISOString(),
+        };
+        custom.push(newUniverse);
+        localStorage.setItem('tarixi-timeline-universes', JSON.stringify(custom));
+        
+        log(`Created: ${newUniverse.name}`, 'success');
+        updateState();
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    function testUpdateUniverse() {
+      try {
+        const custom = JSON.parse(localStorage.getItem('tarixi-timeline-universes') || '[]');
+        if (custom.length === 0) {
+          log('No custom universes to update', 'error');
+          return;
+        }
+        
+        const first = custom[0];
+        first.name = first.name + ' (updated)';
+        first.updatedAt = new Date().toISOString();
+        
+        localStorage.setItem('tarixi-timeline-universes', JSON.stringify(custom));
+        log(`Updated: ${first.name}`, 'success');
+        updateState();
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    function testDeleteUniverse() {
+      try {
+        const custom = JSON.parse(localStorage.getItem('tarixi-timeline-universes') || '[]');
+        if (custom.length === 0) {
+          log('No custom universes to delete', 'error');
+          return;
+        }
+        
+        const deleted = custom.pop();
+        localStorage.setItem('tarixi-timeline-universes', JSON.stringify(custom));
+        log(`Deleted: ${deleted.name}`, 'success');
+        updateState();
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    function testClearStorage() {
+      try {
+        localStorage.removeItem('tarixi-timeline-universes');
+        log('Storage cleared', 'success');
+        updateState();
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      }
+    }
+
+    // Initialize
+    updateState();
+    log('Phase 3 test page loaded', 'success');
+    log('Open index.html to test the full UI');
+  </script>
+</body>
+</html>
