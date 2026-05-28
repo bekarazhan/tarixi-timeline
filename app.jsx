@@ -115,7 +115,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
           <div className="cm-field">
             <label className="cm-label">Тип объекта</label>
             <div className="cm-seg">
-              {[['event','Событие'],['subject','Субъект'],['era','Эпоха']].map(([v,l]) => (
+              {[['event','Событие'],['subject','Участник'],['era','Период']].map(([v,l]) => (
                 <button key={v} className={kind===v ? 'active' : ''} onClick={() => setKind(v)}>{l}</button>
               ))}
             </div>
@@ -139,7 +139,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
 
           <div className="cm-row">
             <div className="cm-field">
-              <label className="cm-label">{kind==='person' ? 'Год рождения' : 'Начало'}</label>
+              <label className="cm-label">{kind === 'subject' && subkind === 'person' ? 'Год рождения' : 'Начало'}</label>
               <input className="cm-input" type="number" value={start} onChange={e => setStart(e.target.value)} placeholder="-500"/>
             </div>
             {kind !== 'event' && (
@@ -309,7 +309,7 @@ function HeaderSearch({ items, onSelect }) {
                 <div>
                   <div>{window.itemLabel(r)}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>
-                    {pt?.name || ''} · {window.itemRegion(r) === 'kz' ? 'KZ' : 'World'}
+                    {[pt?.name, r.tags.map(id => window.TAG_MAP[id]).find(t => t?.facet === 'place')?.name].filter(Boolean).join(' · ')}
                   </div>
                 </div>
                 <span className="yr">{window.formatYearShort(s)}</span>
@@ -578,9 +578,9 @@ function App() {
           label="Визуальный язык"
           value={t.vibe || 'data'}
           options={[
-            { value: 'data',          label: 'Data' },
-            { value: 'archive',       label: 'Archive' },
-            { value: 'constellation', label: 'Cosmos' },
+            { value: 'data',          label: 'Данные' },
+            { value: 'archive',       label: 'Архив' },
+            { value: 'constellation', label: 'Космос' },
           ]}
           onChange={(v) => setTweak('vibe', v)}
         />
@@ -610,12 +610,12 @@ function App() {
           onChange={(v) => setTweak('showMinimap', v)}
         />
         <window.TweakToggle
-          label="Буфер настоящего"
+          label="Маркер настоящего"
           value={t.presentBuffer !== false}
           onChange={(v) => setTweak('presentBuffer', v)}
         />
 
-        <window.TweakSection label="Быстрая навигация по эпохам" />
+        <window.TweakSection label="Быстрая навигация по периодам" />
         {window.EPOCH_PRESETS.map(ep => (
           <window.TweakButton
             key={ep.id}

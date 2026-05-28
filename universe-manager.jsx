@@ -267,7 +267,7 @@ function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm universe-edit-modal" onClick={e => e.stopPropagation()}>
         <div className="cm-head">
-          <span>{isEdit ? 'Редактировать вселенную' : 'Создать вселенную'}</span>
+          <span>{isEdit ? 'Редактировать коллекцию' : 'Создать коллекцию'}</span>
           <button className="cm-close" onClick={onClose}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -389,7 +389,7 @@ function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
             onClick={handleSave} 
             disabled={!name.trim()}
           >
-            {isEdit ? 'Сохранить' : 'Создать'}
+            {isEdit ? 'Сохранить' : 'Создать коллекцию'}
           </button>
         </div>
       </div>
@@ -410,7 +410,7 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm universe-delete-modal" onClick={e => e.stopPropagation()}>
         <div className="cm-head">
-          <span style={{ color: '#ef4444' }}>Удалить вселенную</span>
+          <span style={{ color: '#ef4444' }}>Удалить коллекцию</span>
           <button className="cm-close" onClick={onClose}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -530,7 +530,7 @@ function UniverseManagerPanel({
               <div className="universe-option-body">
                 <div className="universe-option-name">
                   {u.name}
-                  {isProtected && <span className="universe-protected-badge">основная</span>}
+                  {isProtected && <span className="universe-protected-badge">встроенная</span>}
                 </div>
                 <div className="universe-option-desc">{u.description}</div>
               </div>
@@ -579,7 +579,7 @@ function UniverseManagerPanel({
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         </svg>
-        Создать вселенную
+        Создать коллекцию
       </button>
 
       {/* Edit/Create Modal */}

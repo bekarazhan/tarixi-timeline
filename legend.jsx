@@ -3,9 +3,9 @@
 const { useMemo, useState, useRef } = React;
 
 const KIND_META = {
-  subject: { label: 'Субъекты', color: '#cbd1e1' },
-  event:   { label: 'События',  color: '#5fd49a' },
-  era:     { label: 'Эпохи',    color: '#38bdf8' },
+  subject: { label: 'Участники', color: '#cbd1e1' },
+  event:   { label: 'События',   color: '#5fd49a' },
+  era:     { label: 'Периоды',   color: '#38bdf8' },
 };
 
 const PALETTE = [
