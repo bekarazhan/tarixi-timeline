@@ -4,6 +4,11 @@
 
 const { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } = React;
 
+// ===== Zoom Handle constants =====
+const HANDLE_WIDTH = 16;
+const HANDLE_HEIGHT = 28;
+const HANDLE_GRAB_WIDTH = 8;
+
 // Треки: 0=события, 1=субъекты (люди/народы/государства/города…), 2=эпохи
 const NUM_TRACKS = 3;
 
@@ -18,6 +23,9 @@ const GLOBAL_MIN = -42000;
 const GLOBAL_MAX = 2030;
 const MIN_SPAN = 8;
 const MAX_SPAN = GLOBAL_MAX - GLOBAL_MIN;
+// Minimap range - used for synchronized zoom handles and minimap window
+const MINIMAP_MIN = -2000;
+const MINIMAP_MAX = 2030;
 const AXIS_BUFFER = 12;     // зазор между осью и первым треком
 const TRACK_GAP = 6;        // зазор между треками
 const REGION_GAP = 12;      // зазор от оси до начала региональной части
@@ -123,6 +131,9 @@ function Timeline({
     const ro = new ResizeObserver(update); ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // -- zoom handle drag state --
+  const zoomDragRef = useRef(null); // { mode: 'left'|'right'|'center', startX, startViewStart, startViewEnd }
 
   const ROW = rowHeight;
 
@@ -250,7 +261,7 @@ function Timeline({
   // pan via mouse drag
   const dragRef = useRef(null);
   const onPointerDown = (e) => {
-    if (e.target.closest('.tl-item, .tl-controls, .breadcrumb')) return;
+    if (e.target.closest('.tl-item, .tl-controls, .breadcrumb, .tl-zoom-handles')) return;
     dragRef.current = {
       startX: e.clientX, startY: e.clientY,
       startViewStart: viewStart, startViewEnd: viewEnd,
@@ -275,9 +286,9 @@ function Timeline({
     const dYears = -dx * span / size.w;
     let ns = dragRef.current.startViewStart + dYears;
     let ne = dragRef.current.startViewEnd + dYears;
-    // clamp
-    if (ns < GLOBAL_MIN) { ne += (GLOBAL_MIN - ns); ns = GLOBAL_MIN; }
-    if (ne > GLOBAL_MAX) { ns -= (ne - GLOBAL_MAX); ne = GLOBAL_MAX; }
+    // clamp to minimap bounds for consistency
+    if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
+    if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
     setView(ns, ne);
     setScrollY(dragRef.current.startScrollY - dy);
   };
@@ -301,8 +312,9 @@ function Timeline({
       const span = viewEnd - viewStart;
       const dYears = (deltaX / size.w) * span;
       let ns = viewStart + dYears, ne = viewEnd + dYears;
-      if (ns < GLOBAL_MIN) { ne += (GLOBAL_MIN - ns); ns = GLOBAL_MIN; }
-      if (ne > GLOBAL_MAX) { ns -= (ne - GLOBAL_MAX); ne = GLOBAL_MAX; }
+      // clamp to minimap bounds
+      if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
+      if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
       setView(ns, ne);
       return;
     }
@@ -319,8 +331,9 @@ function Timeline({
     const yearAt = scale.xToYear(x);
     let ns = yearAt - newSpan * ratio;
     let ne = yearAt + newSpan * (1 - ratio);
-    if (ns < GLOBAL_MIN) { ne += (GLOBAL_MIN - ns); ns = GLOBAL_MIN; }
-    if (ne > GLOBAL_MAX) { ns -= (ne - GLOBAL_MAX); ne = GLOBAL_MAX; }
+    // clamp to minimap bounds
+    if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
+    if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
     setView(ns, ne);
   };
 
@@ -328,6 +341,103 @@ function Timeline({
     setCursorState({ x: null, year: null });
     setHover(null);
   };
+
+  // ============ ZOOM HANDLE INTERACTIONS =================
+  // Use minimap coordinate system for consistent behavior with minimap window
+  const minimapYearToX = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * size.w;
+  const minimapXToYear = (x) => MINIMAP_MIN + (x / size.w) * (MINIMAP_MAX - MINIMAP_MIN);
+
+  const onZoomHandleDown = (e, mode) => {
+    e.stopPropagation();
+    e.preventDefault();
+    zoomDragRef.current = {
+      mode,
+      startX: e.clientX,
+      startViewStart: viewStart,
+      startViewEnd: viewEnd,
+    };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const onZoomHandleMove = (e) => {
+    if (!zoomDragRef.current) return;
+    const { mode, startX, startViewStart, startViewEnd } = zoomDragRef.current;
+    const dx = e.clientX - startX;
+    
+    // Convert pixel movement to years using minimap scale for consistency
+    const dYears = (dx / size.w) * (MINIMAP_MAX - MINIMAP_MIN);
+    const symmetric = e.ctrlKey || e.metaKey;
+
+    let ns = startViewStart;
+    let ne = startViewEnd;
+
+    if (mode === 'center') {
+      // Pan without changing scale
+      ns = startViewStart + dYears;
+      ne = startViewEnd + dYears;
+    } else if (mode === 'left') {
+      if (symmetric) {
+        // Symmetric zoom from center
+        const center = (startViewStart + startViewEnd) / 2;
+        const newHalfSpan = Math.max(MIN_SPAN / 2, (startViewEnd - center) - dYears);
+        ns = center - newHalfSpan;
+        ne = center + newHalfSpan;
+      } else {
+        // Only move left edge
+        ns = startViewStart + dYears;
+      }
+    } else if (mode === 'right') {
+      if (symmetric) {
+        // Symmetric zoom from center
+        const center = (startViewStart + startViewEnd) / 2;
+        const newHalfSpan = Math.max(MIN_SPAN / 2, (center - startViewStart) + dYears);
+        ns = center - newHalfSpan;
+        ne = center + newHalfSpan;
+      } else {
+        // Only move right edge
+        ne = startViewEnd + dYears;
+      }
+    }
+
+    // Clamp to minimap bounds (same as minimap window)
+    const currentSpan = ne - ns;
+    if (ns < MINIMAP_MIN) { ns = MINIMAP_MIN; ne = ns + currentSpan; }
+    if (ne > MINIMAP_MAX) { ne = MINIMAP_MAX; ns = ne - currentSpan; }
+    if (currentSpan < MIN_SPAN) {
+      const center = (ns + ne) / 2;
+      ns = center - MIN_SPAN / 2;
+      ne = center + MIN_SPAN / 2;
+    }
+    if (currentSpan > (MINIMAP_MAX - MINIMAP_MIN)) {
+      ns = MINIMAP_MIN;
+      ne = MINIMAP_MAX;
+    }
+
+    setView(ns, ne);
+  };
+
+  const onZoomHandleUp = (e) => {
+    if (zoomDragRef.current) {
+      zoomDragRef.current = null;
+    }
+  };
+
+  const onZoomHandleDoubleClick = (e, mode) => {
+    e.stopPropagation();
+    // Reset to minimap full range
+    setView(MINIMAP_MIN, MINIMAP_MAX);
+  };
+
+  // Handle keyboard release for zoom drag
+  useEffect(() => {
+    const handleKeyUp = () => {
+      if (zoomDragRef.current) {
+        zoomDragRef.current = null;
+      }
+    };
+    window.addEventListener('keyup', handleKeyUp);
+    return () => window.removeEventListener('keyup', handleKeyUp);
+  }, []);
 
   // ============== ITEM RENDER ===============
   const renderItem = (item) => {
@@ -492,6 +602,17 @@ function Timeline({
         <button className="tl-zoom-btn" onClick={() => setView(-1000, 2030)} title="Сбросить вид" style={{ fontSize: 12 }}>⤢</button>
       </div>
 
+      {/* zoom handles */}
+      <ZoomHandles
+        viewStart={viewStart}
+        viewEnd={viewEnd}
+        width={size.w}
+        onHandleDown={onZoomHandleDown}
+        onHandleMove={onZoomHandleMove}
+        onHandleUp={onZoomHandleUp}
+        onHandleDoubleClick={onZoomHandleDoubleClick}
+      />
+
       {/* breadcrumb */}
       {currentEpoch && (
         <div className="breadcrumb" style={{ '--c': currentEpoch.color }}>
@@ -506,6 +627,7 @@ function Timeline({
         <span><kbd>⇧</kbd> + scroll — пан</span>
         <span><kbd>⌘</kbd> + scroll — zoom</span>
         <span>drag — двигай</span>
+        <span>края — масштаб</span>
       </div>
 
       {/* tooltip */}
@@ -534,7 +656,160 @@ function Timeline({
   );
 }
 
+// ===== Zoom Handles Component =====
+// Uses the same minimap coordinate system for synchronized positioning
+function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, onHandleUp, onHandleDoubleClick }) {
+  const [hoveredHandle, setHoveredHandle] = useState(null); // 'left' | 'right' | 'center' | null
+  const [isDragging, setIsDragging] = useState(false);
+  const [symmetricMode, setSymmetricMode] = useState(false);
+
+  // Track Ctrl/Meta key for symmetric zoom indicator
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey || e.metaKey) setSymmetricMode(true);
+    };
+    const handleKeyUp = () => setSymmetricMode(false);
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  const handlePointerDown = (e, mode) => {
+    setIsDragging(true);
+    onHandleDown(e, mode);
+  };
+
+  const handlePointerMove = (e) => {
+    if (isDragging) {
+      onHandleMove(e);
+    }
+  };
+
+  const handlePointerUp = (e) => {
+    if (isDragging) {
+      setIsDragging(false);
+      onHandleUp(e);
+    }
+  };
+
+  const handleMouseEnter = (mode) => {
+    if (!isDragging) {
+      setHoveredHandle(mode);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isDragging) {
+      setHoveredHandle(null);
+    }
+  };
+
+  const span = viewEnd - viewStart;
+  
+  // Use minimap coordinate system for consistent positioning
+  // This ensures zoom handles align with minimap window
+  const yearToX = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * width;
+  
+  // Calculate handle positions using minimap scale - same as minimap window  
+  // Clamp to minimap bounds for perfect synchronization with minimap window
+  const handleLeft = Math.max(0, Math.min(width - HANDLE_WIDTH, yearToX(Math.max(MINIMAP_MIN, viewStart))));
+  const handleRight = Math.max(HANDLE_WIDTH, Math.min(width, yearToX(Math.min(MINIMAP_MAX, viewEnd))));
+  
+  // Center area between handles - this is our visible window (same as minimap window)
+  const centerLeft = Math.max(0, handleLeft + HANDLE_WIDTH - 4);
+  const centerRight = Math.min(width, handleRight - HANDLE_WIDTH + 4);
+  const centerWidth = Math.max(0, centerRight - centerLeft);
+
+  const formatYear = (year) => {
+    return window.formatYearShort(Math.round(year));
+  };
+
+  const formatSpan = (years) => {
+    if (years >= 1000) return `${(years / 1000).toFixed(1)} тыс. лет`;
+    if (years >= 100) return `${Math.round(years / 10) * 10} лет`;
+    return `${Math.round(years)} лет`;
+  };
+
+  return (
+    <div className={`tl-zoom-handles ${symmetricMode ? 'symmetric-mode' : ''}`} style={{ width }}>
+      {/* Visible range indicator - shows the current view window on the timeline */}
+      <div
+        className="tl-zoom-range-indicator"
+        style={{
+          left: handleLeft + HANDLE_WIDTH,
+          width: Math.max(0, handleRight - handleLeft - 2 * HANDLE_WIDTH)
+        }}
+      />
+      
+      {/* Left handle - positioned where view starts on timeline */}
+      <div
+        className={`tl-zoom-handle tl-zoom-handle-left ${hoveredHandle === 'left' || isDragging ? 'hovered' : ''} ${symmetricMode ? 'symmetric' : ''}`}
+        style={{ left: handleLeft }}
+        onPointerDown={(e) => handlePointerDown(e, 'left')}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onMouseEnter={() => handleMouseEnter('left')}
+        onMouseLeave={handleMouseLeave}
+        onDoubleClick={(e) => onHandleDoubleClick(e, 'left')}
+        title="Тяните для изменения начала периода. Ctrl+тяните для симметричного зума. Двойной клик — полный масштаб."
+      >
+        <div className="tl-zoom-handle-bar"></div>
+        <div className="tl-zoom-handle-grip"></div>
+        <div className="tl-zoom-handle-label">
+          {formatYear(viewStart)}
+        </div>
+      </div>
+
+      {/* Right handle */}
+      <div
+        className={`tl-zoom-handle tl-zoom-handle-right ${hoveredHandle === 'right' || isDragging ? 'hovered' : ''} ${symmetricMode ? 'symmetric' : ''}`}
+        style={{ left: handleRight - HANDLE_WIDTH }}
+        onPointerDown={(e) => handlePointerDown(e, 'right')}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onMouseEnter={() => handleMouseEnter('right')}
+        onMouseLeave={handleMouseLeave}
+        onDoubleClick={(e) => onHandleDoubleClick(e, 'right')}
+        title="Тяните для изменения конца периода. Ctrl+тяните для симметричного зума. Двойной клик — полный масштаб."
+      >
+        <div className="tl-zoom-handle-bar"></div>
+        <div className="tl-zoom-handle-grip"></div>
+        <div className="tl-zoom-handle-label tl-zoom-handle-label-right">
+          {formatYear(viewEnd)}
+        </div>
+      </div>
+
+      {/* Center pan area */}
+      <div
+        className={`tl-zoom-handle-center ${hoveredHandle === 'center' || isDragging ? 'hovered' : ''}`}
+        style={{ left: centerLeft, width: centerWidth }}
+        onPointerDown={(e) => handlePointerDown(e, 'center')}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onMouseEnter={() => handleMouseEnter('center')}
+        onMouseLeave={handleMouseLeave}
+        title="Тяните для перемещения по временной шкале"
+      >
+        {centerWidth > 60 && (
+          <div className="tl-zoom-handle-center-info">
+            {formatSpan(span)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ===== Minimap =====
+// Uses MINIMAP_MIN/MINIMAP_MAX constants defined at top of file
+
 function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, activeSubkinds }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
@@ -547,12 +822,10 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
     return () => ro.disconnect();
   }, []);
 
-  const MIN_Y = -2000;
-  const MAX_Y = 2030;
-  const y2x = (y) => ((y - MIN_Y) / (MAX_Y - MIN_Y)) * w;
-  const x2y = (x) => MIN_Y + (x / w) * (MAX_Y - MIN_Y);
+  const y2x = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * w;
+  const x2y = (x) => MINIMAP_MIN + (x / w) * (MINIMAP_MAX - MINIMAP_MIN);
 
-  const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MIN_Y || ep.end >= MIN_Y);
+  const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MINIMAP_MIN || ep.end >= MINIMAP_MIN);
 
   const visibleItems = items.filter(it =>
     (showWorld || window.itemRegion(it) === 'kz') &&
@@ -569,8 +842,8 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
     const span = viewEnd - viewStart;
     // jump center
     let ns = year - span/2, ne = year + span/2;
-    if (ns < MIN_Y) { ne += MIN_Y - ns; ns = MIN_Y; }
-    if (ne > MAX_Y) { ns -= ne - MAX_Y; ne = MAX_Y; }
+    if (ns < MINIMAP_MIN) { ne += MINIMAP_MIN - ns; ns = MINIMAP_MIN; }
+    if (ne > MINIMAP_MAX) { ns -= ne - MINIMAP_MAX; ne = MINIMAP_MAX; }
     setView(ns, ne);
     dragRef.current = { lastX: e.clientX };
     e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
@@ -578,14 +851,18 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
   const onMouseMove = (e) => {
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.lastX;
-    dragRef.current.lastX = e.clientX;
-    const dYears = (dx / w) * (MAX_Y - MIN_Y);
+    const dYears = (dx / w) * (MINIMAP_MAX - MINIMAP_MIN);
     let ns = viewStart + dYears, ne = viewEnd + dYears;
-    if (ns < MIN_Y) { ne += MIN_Y - ns; ns = MIN_Y; }
-    if (ne > MAX_Y) { ns -= ne - MAX_Y; ne = MAX_Y; }
+    if (ns < MINIMAP_MIN) { ne += MINIMAP_MIN - ns; ns = MINIMAP_MIN; }
+    if (ne > MINIMAP_MAX) { ns -= ne - MINIMAP_MAX; ne = MINIMAP_MAX; }
     setView(ns, ne);
   };
   const onMouseUp = () => { dragRef.current = null; };
+
+  // Calculate minimap window position clamped to minimap range
+  const windowLeft = y2x(Math.max(MINIMAP_MIN, viewStart));
+  const windowRight = y2x(Math.min(MINIMAP_MAX, viewEnd));
+  const windowWidth = Math.max(0, windowRight - windowLeft);
 
   return (
     <div className="tl-minimap" ref={wrapRef}>
@@ -599,8 +876,8 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
         {eras.map(ep => (
           <div key={ep.id} className="tl-minimap-era"
             style={{
-              left: y2x(Math.max(MIN_Y, ep.start)),
-              width: y2x(Math.min(MAX_Y, ep.end)) - y2x(Math.max(MIN_Y, ep.start)),
+              left: y2x(Math.max(MINIMAP_MIN, ep.start)),
+              width: y2x(Math.min(MINIMAP_MAX, ep.end)) - y2x(Math.max(MINIMAP_MIN, ep.start)),
               background: ep.color,
             }}
           />
@@ -608,8 +885,8 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
         <div className="tl-minimap-track"></div>
         {visibleItems.map(it => {
           const [s, e] = window.itemRange(it);
-          if (e < MIN_Y) return null;
-          const x = y2x(Math.max(MIN_Y, s));
+          if (e < MINIMAP_MIN) return null;
+          const x = y2x(Math.max(MINIMAP_MIN, s));
           const width = Math.max(2, y2x(e) - x);
           return (
             <div key={it.id}
@@ -620,13 +897,13 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
         })}
         <div className="tl-minimap-window"
           style={{
-            left: y2x(Math.max(MIN_Y, viewStart)),
-            width: y2x(Math.min(MAX_Y, viewEnd)) - y2x(Math.max(MIN_Y, viewStart)),
+            left: windowLeft,
+            width: windowWidth,
           }}
         ></div>
       </div>
-      <div className="tl-minimap-label start">{window.formatYearShort(MIN_Y)}</div>
-      <div className="tl-minimap-label end">{window.formatYearShort(MAX_Y)}</div>
+      <div className="tl-minimap-label start">{window.formatYearShort(MINIMAP_MIN)}</div>
+      <div className="tl-minimap-label end">{window.formatYearShort(MINIMAP_MAX)}</div>
     </div>
   );
 }

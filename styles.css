@@ -846,13 +846,14 @@ button { font-family: inherit; }
   min-height: 0;
   background: var(--bg-0);
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
 }
 
 .tl-stage {
   position: relative;
   overflow: hidden;
   cursor: grab;
+  padding-bottom: 48px; /* Space for zoom handles */
 }
 .tl-stage[data-dragging="true"] { cursor: grabbing; }
 
@@ -1128,6 +1129,283 @@ button { font-family: inherit; }
   padding: 0 5px; border-radius: 3px;
   font-family: inherit;
   color: var(--text-1);
+}
+
+/* ========== Zoom Handles ========== */
+.tl-zoom-handles {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  height: 48px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* Visible range indicator - highlighted region between handles */
+.tl-zoom-range-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 32px;
+  background: linear-gradient(to top, color-mix(in oklab, var(--accent) 6%, transparent), transparent);
+  border-top: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 20%, transparent);
+  pointer-events: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.tl-zoom-handles.symmetric-mode .tl-zoom-range-indicator {
+  background: linear-gradient(to top, color-mix(in oklab, var(--c-state) 8%, transparent), transparent);
+  border-top-color: color-mix(in oklab, var(--c-state) 25%, transparent);
+  border-bottom-color: color-mix(in oklab, var(--c-state) 25%, transparent);
+}
+
+.tl-zoom-handle {
+  position: absolute;
+  bottom: 0;
+  width: 16px;
+  height: 32px;
+  pointer-events: auto;
+  cursor: ew-resize;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  opacity: 0.4;
+  z-index: 16;
+}
+
+.tl-zoom-handle:hover,
+.tl-zoom-handle.hovered {
+  opacity: 1;
+  z-index: 17;
+}
+
+/* Hide handles when zoomed out to full range */
+.tl-zoom-handles[data-full-range="true"] .tl-zoom-handle {
+  opacity: 0.2;
+}
+
+.tl-zoom-handle-bar {
+  width: 2px;
+  height: 24px;
+  background: var(--accent);
+  border-radius: 1px;
+  margin-bottom: 4px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+/* Vertical line extending from handle bar to bottom - visual anchor */
+.tl-zoom-handle-bar::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 8px;
+  background: linear-gradient(to bottom, color-mix(in oklab, var(--accent) 40%, transparent), transparent);
+}
+
+.tl-zoom-handle:hover .tl-zoom-handle-bar,
+.tl-zoom-handle.hovered .tl-zoom-handle-bar {
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+
+.tl-zoom-handle-grip {
+  width: 12px;
+  height: 6px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--text-2), var(--text-3));
+  border: 1px solid var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 2px;
+  transition: all 0.15s ease;
+}
+
+.tl-zoom-handle-grip::before,
+.tl-zoom-handle-grip::after {
+  content: "";
+  width: 1px;
+  height: 4px;
+  background: var(--bg-1);
+  border-radius: 1px;
+}
+
+.tl-zoom-handle:hover .tl-zoom-handle-grip,
+.tl-zoom-handle.hovered .tl-zoom-handle-grip {
+  background: linear-gradient(to bottom, var(--text-1), var(--text-2));
+  border-color: var(--text-3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.tl-zoom-handle-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+  white-space: nowrap;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 6px;
+  opacity: 0;
+  transition: all 0.15s ease;
+  pointer-events: none;
+}
+
+.tl-zoom-handle:hover .tl-zoom-handle-label,
+.tl-zoom-handle.hovered .tl-zoom-handle-label {
+  opacity: 1;
+  bottom: -24px;
+}
+
+.tl-zoom-handle-label-right {
+  transform: translateX(-50%);
+}
+
+/* Left handle specific */
+.tl-zoom-handle-left {
+  transform-origin: center right;
+}
+
+.tl-zoom-handle-left .tl-zoom-handle-bar {
+  transform-origin: bottom center;
+}
+
+.tl-zoom-handle-left:hover .tl-zoom-handle-bar,
+.tl-zoom-handle-left.hovered .tl-zoom-handle-bar {
+  transform: scaleY(1.15);
+}
+
+/* Right handle specific */
+.tl-zoom-handle-right {
+  transform-origin: center left;
+}
+
+.tl-zoom-handle-right .tl-zoom-handle-bar {
+  transform-origin: bottom center;
+}
+
+.tl-zoom-handle-right:hover .tl-zoom-handle-bar,
+.tl-zoom-handle-right.hovered .tl-zoom-handle-bar {
+  transform: scaleY(1.15);
+}
+
+/* Center pan area */
+.tl-zoom-handle-center {
+  position: absolute;
+  bottom: 0;
+  height: 32px;
+  pointer-events: auto;
+  cursor: grab;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  transition: background 0.15s ease;
+  border-radius: 4px 4px 0 0;
+}
+
+.tl-zoom-handle-center:hover,
+.tl-zoom-handle-center.hovered {
+  background: linear-gradient(to top, color-mix(in oklab, var(--accent) 8%, transparent), transparent);
+}
+
+.tl-zoom-handle-center:active {
+  cursor: grabbing;
+}
+
+.tl-zoom-handle-center-info {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 8px;
+  opacity: 0;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tl-zoom-handle-center:hover .tl-zoom-handle-center-info,
+.tl-zoom-handle-center.hovered .tl-zoom-handle-center-info {
+  opacity: 1;
+  color: var(--text-1);
+  border-color: var(--line-strong);
+}
+
+/* Symmetric zoom mode indicator */
+.tl-zoom-handle.symmetric .tl-zoom-handle-bar {
+  background: color-mix(in oklab, var(--accent) 70%, var(--c-state));
+  box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+
+.tl-zoom-handle.symmetric .tl-zoom-handle-grip {
+  background: linear-gradient(to bottom, var(--c-state), var(--text-2));
+}
+
+/* Visual arrows to indicate symmetric zoom */
+.tl-zoom-handle-left.symmetric .tl-zoom-handle-bar::before {
+  content: "↔";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+.tl-zoom-handle-right.symmetric .tl-zoom-handle-bar::after {
+  content: "↔";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+/* Mobile touch support */
+@media (max-width: 768px) {
+  .tl-zoom-handle {
+    width: 24px;
+  }
+  
+  .tl-zoom-handle-bar {
+    width: 3px;
+  }
+  
+  .tl-zoom-handle-grip {
+    width: 18px;
+    height: 8px;
+  }
+  
+  .tl-zoom-handle-label {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+  
+  .tl-zoom-handles {
+    height: 56px;
+  }
+  
+  /* Hide symmetric arrows on mobile */
+  .tl-zoom-handle-left.symmetric .tl-zoom-handle-bar::before,
+  .tl-zoom-handle-right.symmetric .tl-zoom-handle-bar::after {
+    display: none;
+  }
 }
 
 /* ---------- minimap ---------- */
