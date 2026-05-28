@@ -107,7 +107,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 function Timeline({
   items, activeTags, activeKinds, activeSubkinds, showWorld, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
-  rowHeight, showConnections, colorLogic,
+  rowHeight, showConnections,
 }) {
   const stageRef = useRef();
   const [size, setSize] = useState({ w: 1200, h: 700 });
@@ -335,12 +335,8 @@ function Timeline({
     const x1 = scale.yearToX(s);
     const x2 = scale.yearToX(e);
     const yBase = itemY(item) + scrollY;
-    // Логика выбора цвета на основе colorLogic
-    // primary/category = только domain, place = только place, both = оба
-    const colorMode = colorLogic || 'category';
-    
-    const domainColor = window.colorForItem(item, colorMode === 'place' ? 'place' : 'primary');
-    const placeColor  = colorMode === 'both' || colorMode === 'place' ? window.colorForItem(item, 'place') : domainColor;
+    // Всегда используем цвет области (domain) для заливки
+    const domainColor = window.colorForItem(item);
     
     const isSelected = selected && selected.id === item.id;
     const isDim = selected && selected.id !== item.id;
@@ -355,7 +351,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-era ${isSelected ? 'selected' : ''}`}
-          style={{ left: x1, top: yBase, width: w, '--c': domainColor, '--pc': placeColor }}
+          style={{ left: x1, top: yBase, width: w, '--c': domainColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
@@ -371,7 +367,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-subject ${isSelected ? 'selected' : ''}`}
-          style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': domainColor, '--pc': placeColor }}
+          style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': domainColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
@@ -389,7 +385,7 @@ function Timeline({
       return (
         <div key={item.id}
           className={`tl-item tl-event ${isSelected ? 'selected' : ''}`}
-          style={{ left: x1, top: yBase, height: ROW, '--c': domainColor, '--pc': placeColor }}
+          style={{ left: x1, top: yBase, height: ROW, '--c': domainColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
@@ -618,7 +614,7 @@ function Minimap({ items, viewStart, viewEnd, setView, showWorld, activeKinds, a
           return (
             <div key={it.id}
               className={`tl-minimap-item ${window.itemRegion(it)}`}
-              style={{ left: x, width, background: window.colorForItem(it, 'primary') }}
+              style={{ left: x, width, background: window.colorForItem(it) }}
             />
           );
         })}

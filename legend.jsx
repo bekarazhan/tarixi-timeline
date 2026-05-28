@@ -115,7 +115,6 @@ function Legend({
   activeSubkinds, onToggleSubkind,
   customSubkinds, onAddSubkind,
   items, allTags, onAddTag,
-  colorBy, onColorByChange,
 }) {
   allTags = allTags || window.TAG_CATALOG;
 
@@ -166,29 +165,6 @@ function Legend({
       <div className="legend-facet">
         <div className="legend-section-title">Тип объекта</div>
         
-        {/* Переключатель режима цвета */}
-        <div style={{ marginBottom: '10px' }}>
-          <div className="legend-section-title" style={{ marginBottom: '6px' }}>Режим цвета</div>
-          <div className="legend-colorby">
-            <button 
-              className={`legend-colorby-btn ${!colorBy || colorBy === 'primary' || colorBy === 'category' ? 'on' : ''}`}
-              onClick={() => onColorByChange && onColorByChange('category')}
-            >Область</button>
-            <button 
-              className={`legend-colorby-btn ${colorBy === 'place' ? 'on' : ''}`}
-              onClick={() => onColorByChange && onColorByChange('place')}
-            >Место</button>
-            <button 
-              className={`legend-colorby-btn ${colorBy === 'both' ? 'on' : ''}`}
-              onClick={() => onColorByChange && onColorByChange('both')}
-            >Оба</button>
-          </div>
-        </div>
-        
-        <div className="legend-encoding-hint">
-          <span><span className="legend-encoding-swatch domain"></span>заливка = область</span>
-          <span><span className="legend-encoding-swatch place"></span>точки = место</span>
-        </div>
         {['subject', 'event', 'era'].map(k => {
           const m = KIND_META[k];
           const on = activeKinds.has(k);

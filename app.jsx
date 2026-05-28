@@ -399,8 +399,6 @@ function App() {
             items={items}
             allTags={allTags}
             onAddTag={handleAddTag}
-            colorBy={t.colorLogic || 'primary'}
-            onColorByChange={(v) => setTweak('colorLogic', v)}
           />
         )}
 
@@ -415,7 +413,6 @@ function App() {
             onSelect={handleSelectAndZoom}
             density={t.density}
             scaleMode={t.timeMode || 'real'}
-            colorLogic={t.colorLogic || 'category'}
             viewStart={view.start}
             viewEnd={view.end}
             setView={setView}
