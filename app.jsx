@@ -191,6 +191,111 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
   );
 }
 
+function UniverseSelector({ currentUniverse, onSelect, items }) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const btnRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+          btnRef.current && !btnRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const universes = window.UNIVERSE_META || [];
+  const current = universes.find(u => u.id === currentUniverse) || universes[0];
+
+  // Handler for universe management actions
+  const handleCreateUniverse = (universeData) => {
+    const newUniverse = window.createUniverse(universeData);
+    console.log('[App] Created universe:', newUniverse);
+  };
+
+  const handleEditUniverse = (universeId, updates) => {
+    const updated = window.updateUniverse(universeId, updates);
+    console.log('[App] Updated universe:', updated);
+  };
+
+  const handleDeleteUniverse = (universeId) => {
+    const result = window.deleteUniverseFromMeta(universeId);
+    if (result.success) {
+      // Remove items belonging to deleted universe
+      const updatedItems = items.filter(item => item.universe !== universeId);
+      window.ALL_ITEMS = updatedItems;
+      // Trigger re-render by updating state in parent
+      return updatedItems;
+    }
+    return null;
+  };
+
+  return (
+    <div className="universe-selector">
+      <button
+        ref={btnRef}
+        className="universe-btn"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        title={`Текущая вселенная: ${current.name}`}
+      >
+        <span className="universe-btn-icon">{current.icon}</span>
+        <span className="universe-btn-name">{current.name}</span>
+        <svg className="universe-btn-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      <div ref={dropdownRef} className="universe-dropdown" data-open={open}>
+        {window.UniverseManagerPanel && (
+          <window.UniverseManagerPanel
+            currentUniverse={currentUniverse}
+            universes={universes}
+            items={items}
+            onCreate={handleCreateUniverse}
+            onEdit={handleEditUniverse}
+            onDelete={(uid) => {
+              const updatedItems = handleDeleteUniverse(uid);
+              if (updatedItems) {
+                // Force parent to update items
+                const event = new CustomEvent('universe-deleted', { detail: { universeId: uid, items: updatedItems } });
+                window.dispatchEvent(event);
+              }
+            }}
+            onSwitch={(uid) => { onSelect(uid); setOpen(false); }}
+          />
+        ) || (
+          // Fallback if UniverseManagerPanel not loaded
+          <>
+            <div className="universe-dropdown-header">Вселенные</div>
+            {universes.map(u => (
+              <button
+                key={u.id}
+                className="universe-option"
+                data-active={u.id === currentUniverse}
+                onClick={() => { onSelect(u.id); setOpen(false); }}
+              >
+                <span className="universe-option-icon">{u.icon}</span>
+                <div className="universe-option-body">
+                  <div className="universe-option-name">{u.name}</div>
+                  <div className="universe-option-desc">{u.description}</div>
+                </div>
+                <svg className="universe-option-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M13 4L6 11l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function HeaderSearch({ items, onSelect }) {
   const [q, setQ] = useState('');
   const [focused, setFocused] = useState(false);
@@ -276,8 +381,25 @@ function App() {
     () => new Set(Object.keys(window.SUBKIND_META || {}))
   );
   const [customSubkinds, setCustomSubkinds] = useState([]);
+  const [currentUniverse, setCurrentUniverse] = useState(window.DEFAULT_UNIVERSE?.id || 'main');
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
+
+  // Filter items by current universe
+  const filteredItems = useMemo(() => {
+    return window.filterByUniverse(items, currentUniverse);
+  }, [items, currentUniverse]);
+
+  // Listen for universe deletion events
+  useEffect(() => {
+    const handleUniverseDeleted = (e) => {
+      const { items: updatedItems } = e.detail;
+      setItems(updatedItems);
+    };
+    
+    window.addEventListener('universe-deleted', handleUniverseDeleted);
+    return () => window.removeEventListener('universe-deleted', handleUniverseDeleted);
+  }, []);
 
   const showWorld = allTags
     .filter(t => t.facet === 'place' && t.id !== 'kz')
@@ -288,8 +410,10 @@ function App() {
   }, []);
 
   const handleCreate = useCallback((item) => {
-    setItems(prev => [...prev, item]);
-  }, []);
+    // Assign new item to current universe
+    const itemWithUniverse = window.setUniverseId(item, currentUniverse);
+    setItems(prev => [...prev, itemWithUniverse]);
+  }, [currentUniverse]);
 
   const handleAddTag = useCallback((tag) => {
     window.TAG_MAP[tag.id] = tag;
@@ -364,9 +488,15 @@ function App() {
           <div className="brand-name">TarixiTimeline <span>· навигатор истории</span></div>
         </div>
 
+        <UniverseSelector
+          currentUniverse={currentUniverse}
+          onSelect={setCurrentUniverse}
+          items={items}
+        />
+
         <div className="header-spacer"></div>
 
-        <HeaderSearch items={items} onSelect={handleSelect} />
+        <HeaderSearch items={filteredItems} onSelect={handleSelect} />
 
         <button className="btn-create" onClick={() => setCreateOpen(true)}>
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -396,7 +526,7 @@ function App() {
             onToggleSubkind={handleToggleSubkind}
             customSubkinds={customSubkinds}
             onAddSubkind={handleAddSubkind}
-            items={items}
+            items={filteredItems}
             allTags={allTags}
             onAddTag={handleAddTag}
           />
@@ -404,7 +534,7 @@ function App() {
 
         <div className="tl-container">
           <window.Timeline
-            items={items}
+            items={filteredItems}
             activeTags={activeTags}
             activeKinds={activeKinds}
             activeSubkinds={activeSubkinds}
@@ -421,7 +551,7 @@ function App() {
           />
           {t.showMinimap && (
             <window.Minimap
-              items={items}
+              items={filteredItems}
               viewStart={view.start}
               viewEnd={view.end}
               setView={setView}
