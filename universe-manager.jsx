@@ -232,6 +232,10 @@ const COLOR_OPTIONS = [
 // Create/Edit Universe Modal
 // ============================================================
 
+function Portal({ children }) {
+  return ReactDOM.createPortal(children, document.body);
+}
+
 function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
   const [name, setName] = useState(universe?.name || '');
   const [description, setDescription] = useState(universe?.description || '');
@@ -264,6 +268,7 @@ function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
   const allEmojis = [...EMOJI_OPTIONS[selectedCategory], ...EMOJI_OPTIONS.custom];
 
   return (
+    <Portal>
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm universe-edit-modal" onClick={e => e.stopPropagation()}>
         <div className="cm-head">
@@ -394,6 +399,7 @@ function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -407,6 +413,7 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
   };
 
   return (
+    <Portal>
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm universe-delete-modal" onClick={e => e.stopPropagation()}>
         <div className="cm-head">
@@ -425,11 +432,11 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
             </svg>
             <h3>Вы уверены?</h3>
             <p>
-              Вселенная <strong>"{universe.name}"</strong> будет удалена безвозвратно.
+              Коллекция <strong>"{universe.name}"</strong> будет удалена безвозвратно.
             </p>
             {itemsCount > 0 && (
               <p className="delete-items-warning">
-                Также будут удалены <strong>{itemsCount} объектов</strong>, которые принадлежат этой вселенной.
+                Также будут удалены <strong>{itemsCount} объектов</strong>, которые принадлежат этой коллекции.
               </p>
             )}
           </div>
@@ -437,8 +444,8 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
 
         <div className="cm-foot">
           <button className="cm-btn ghost" onClick={onClose}>Отмена</button>
-          <button 
-            className="cm-btn" 
+          <button
+            className="cm-btn"
             style={{ background: '#ef4444', color: 'white' }}
             onClick={handleConfirm}
           >
@@ -447,6 +454,7 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
