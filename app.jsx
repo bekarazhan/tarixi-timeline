@@ -372,7 +372,7 @@ function App() {
     setActiveUniverses(prev => {
       const next = new Set(prev);
       if (next.has(universeId)) {
-        if (next.size > 1) next.delete(universeId);
+        next.delete(universeId);
       } else {
         next.add(universeId);
       }

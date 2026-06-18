@@ -203,6 +203,38 @@ function Legend({
         })}
       </div>
 
+      {/* ── Область (domain) ─────────────────────────── */}
+      <div className="legend-facet">
+        <div className="legend-section-title">Область</div>
+        {domainTags.map(tag => {
+          const on = activeTags.has(tag.id);
+          return (
+            <div key={tag.id} className="legend-item" data-off={!on} onClick={() => onToggleTag(tag.id)}>
+              <span className="legend-swatch period" style={{ background: tag.color }}></span>
+              <span className="legend-label">{tag.name}</span>
+              <span className="legend-count">{tagCounts[tag.id] || 0}</span>
+            </div>
+          );
+        })}
+        {onAddTag && <LegendTagCreator facetId="domain" onAdd={onAddTag} />}
+      </div>
+
+      {/* ── Место (place) ────────────────────────────── */}
+      <div className="legend-facet">
+        <div className="legend-section-title">Место</div>
+        {placeTags.map(tag => {
+          const on = activeTags.has(tag.id);
+          return (
+            <div key={tag.id} className="legend-item" data-off={!on} onClick={() => onToggleTag(tag.id)}>
+              <span className="legend-swatch point" style={{ background: tag.color }}></span>
+              <span className="legend-label">{tag.name}</span>
+              <span className="legend-count">{tagCounts[tag.id] || 0}</span>
+            </div>
+          );
+        })}
+        {onAddTag && <LegendTagCreator facetId="place" onAdd={onAddTag} />}
+      </div>
+
       <div className="legend-foot">
         <div className="legend-foot-row">
           <span>Объектов в базе</span>
