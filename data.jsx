@@ -42,14 +42,14 @@ const TAG_CATALOG = [
   { id: 'religion', name: 'Религия',         facet: 'domain', color: '#f7903a' },
   { id: 'economy',  name: 'Экономика',       facet: 'domain', color: '#9fe07b' },
 
-  // Место
-  { id: 'kz',      name: 'Казахстан',        facet: 'place',  color: '#38bdf8' },
-  { id: 'asia',    name: 'Азия',             facet: 'place',  color: '#ffd166' },
-  { id: 'mideast', name: 'Ближний Восток',   facet: 'place',  color: '#ff9f43' },
-  { id: 'europe',  name: 'Европа',           facet: 'place',  color: '#5fd49a' },
-  { id: 'america', name: 'Америка',          facet: 'place',  color: '#ff6b6b' },
-  { id: 'africa',  name: 'Африка',           facet: 'place',  color: '#da77f2' },
-  { id: 'global',  name: 'Весь мир',         facet: 'place',  color: '#8b91a4' },
+  // Место — приглушённая «картографическая» гамма, не конкурирует с яркими Domain
+  { id: 'kz',      name: 'Казахстан',        facet: 'place',  color: '#6aafc9' },
+  { id: 'asia',    name: 'Азия',             facet: 'place',  color: '#b8934a' },
+  { id: 'mideast', name: 'Ближний Восток',   facet: 'place',  color: '#b56838' },
+  { id: 'europe',  name: 'Европа',           facet: 'place',  color: '#5e9e74' },
+  { id: 'america', name: 'Америка',          facet: 'place',  color: '#b85060' },
+  { id: 'africa',  name: 'Африка',           facet: 'place',  color: '#8e5abf' },
+  { id: 'global',  name: 'Весь мир',         facet: 'place',  color: '#7b8499' },
 ];
 
 const TAG_MAP = Object.fromEntries(TAG_CATALOG.map(t => [t.id, t]));

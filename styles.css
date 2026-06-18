@@ -625,6 +625,43 @@ button { font-family: inherit; }
   border-radius: 3px;
   width: 18px;
 }
+
+/* Kind shape indicators — each kind gets a unique visual form */
+.legend-swatch.kind-event {
+  width: 8px; height: 8px;
+  background: var(--c);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--c) 28%, transparent);
+}
+.legend-swatch.kind-subject {
+  width: 22px; height: 3px;
+  background: var(--c);
+  border-radius: 2px;
+}
+.legend-swatch.kind-subject::before,
+.legend-swatch.kind-subject::after {
+  content: '';
+  position: absolute;
+  width: 5px; height: 5px;
+  background: var(--c);
+  border-radius: 50%;
+  top: 50%; transform: translateY(-50%);
+}
+.legend-swatch.kind-subject::before { left: -3px; }
+.legend-swatch.kind-subject::after  { right: -3px; }
+.legend-swatch.kind-era {
+  width: 22px; height: 8px;
+  background: color-mix(in oklab, var(--c) 20%, transparent);
+  border: 1px solid color-mix(in oklab, var(--c) 55%, transparent);
+  border-radius: 2px;
+}
+.legend-swatch.kind-era::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--c);
+  border-radius: 2px 0 0 2px;
+}
 .legend-label {
   font-size: 12.5px; color: var(--text-1); flex: 1;
 }

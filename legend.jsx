@@ -3,9 +3,9 @@
 const { useMemo, useState, useRef } = React;
 
 const KIND_META = {
-  subject: { label: 'Участники', color: '#cbd1e1' },
+  subject: { label: 'Участники', color: '#a0aec0' },
   event:   { label: 'События',   color: '#5fd49a' },
-  era:     { label: 'Периоды',   color: '#38bdf8' },
+  era:     { label: 'Периоды',   color: '#94a3b8' },
 };
 
 const PALETTE = [
@@ -171,7 +171,7 @@ function Legend({
           return (
             <div key={k}>
               <div className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
-                <span className="legend-swatch point" style={{ background: m.color }}></span>
+                <span className={`legend-swatch kind-${k}`} style={{ '--c': m.color }}></span>
                 <span className="legend-label">{m.label}</span>
                 <span className="legend-count">{kindCounts[k]}</span>
               </div>
