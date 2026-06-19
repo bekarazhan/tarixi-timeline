@@ -219,7 +219,7 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
   );
 }
 
-function UniverseSelector({ activeUniverses, onToggle, items, universes, onCreateUniverse, onEditUniverse, onDeleteUniverse }) {
+function UniverseSelector({ activeUniverses, onToggle, items, universes, onCreateUniverse, onEditUniverse, onDeleteUniverse, onImportCollection }) {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const btnRef = useRef(null);
@@ -271,6 +271,7 @@ function UniverseSelector({ activeUniverses, onToggle, items, universes, onCreat
             onEdit={onEditUniverse}
             onDelete={onDeleteUniverse}
             onToggle={onToggle}
+            onImport={onImportCollection}
           />
         ) : (
           // Fallback
@@ -422,6 +423,24 @@ function App() {
     setUniverses([...window.UNIVERSE_META]);
   }, []);
 
+  const handleImportCollection = useCallback((collectionJson) => {
+    const universe = window.createUniverse({
+      name: collectionJson.name,
+      icon: collectionJson.icon || '📦',
+      description: collectionJson.description || '',
+      color: '#6366f1',
+    });
+    const prefix = universe.id + '-';
+    const newItems = collectionJson.items.map(item => ({
+      ...item,
+      id: prefix + item.id,
+      universe: universe.id,
+    }));
+    setUniverses([...window.UNIVERSE_META]);
+    setItems(prev => [...prev, ...newItems]);
+    setActiveUniverses(prev => new Set([...prev, universe.id]));
+  }, []);
+
   const handleDeleteUniverse = useCallback((universeId) => {
     const result = window.deleteUniverseFromMeta(universeId);
     if (result.success) {
@@ -518,6 +537,7 @@ function App() {
           onCreateUniverse={handleCreateUniverse}
           onEditUniverse={handleEditUniverse}
           onDeleteUniverse={handleDeleteUniverse}
+          onImportCollection={handleImportCollection}
         />
 
         <div className="header-spacer"></div>

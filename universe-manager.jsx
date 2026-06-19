@@ -458,6 +458,175 @@ function UniverseDeleteConfirm({ universe, itemsCount, onConfirm, onClose }) {
 }
 
 // ============================================================
+// Import / Export helpers
+// ============================================================
+
+const SCHEMA_EXAMPLE = JSON.stringify({
+  id: "assassins-creed",
+  name: "Assassin's Creed",
+  icon: "⚔️",
+  description: "Персонажи из серии игр в разрезе реальной истории",
+  items: [
+    {
+      id: "altair",
+      kind: "subject",
+      name: "Альтаир ибн Ла-Ахад",
+      tags: ["war", "person"],
+      start: 1165, end: 1257,
+      lifeSpan: "1165 — 1257",
+      desc: "Великий Магистр Братства Ассасинов. Реформировал Орден после Третьего крестового похода."
+    },
+    {
+      id: "ezio",
+      kind: "subject",
+      name: "Эцио Аудиторе да Фиренце",
+      tags: ["war", "person"],
+      start: 1459, end: 1524,
+      lifeSpan: "1459 — 1524",
+      desc: "Итальянский ассасин эпохи Возрождения. Современник Леонардо да Винчи и Макиавелли."
+    },
+    {
+      id: "siege-masyaf",
+      kind: "event",
+      name: "Осада Масьяфа",
+      tags: ["war"],
+      start: 1176, end: 1176,
+      desc: "Попытка Саладина захватить крепость ассасинов в Сирии."
+    }
+  ]
+}, null, 2);
+
+function validateCollection(text) {
+  let json;
+  try { json = JSON.parse(text); } catch { return { error: 'Невалидный JSON — проверьте синтаксис' }; }
+  if (!json.name) return { error: 'Поле "name" обязательно' };
+  if (!Array.isArray(json.items) || json.items.length === 0)
+    return { error: 'Поле "items" должно быть непустым массивом' };
+  const bad = json.items.filter(it => !it.id || !it.kind || !it.name || it.start == null);
+  if (bad.length) return { error: `${bad.length} объект(ов) без обязательных полей (id, kind, name, start)` };
+  return { json };
+}
+
+function exportUniverseAsJSON(universe, allItems) {
+  const collItems = allItems.filter(it => it.universe === universe.id);
+  const data = {
+    id: universe.id, name: universe.name,
+    icon: universe.icon || '📦',
+    description: universe.description || '',
+    items: collItems.map(({ universe: _u, ...it }) => it),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${universe.id}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function ImportCollectionModal({ onImport, onClose }) {
+  const [tab, setTab] = useState('paste');
+  const [text, setText] = useState('');
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [preview, setPreview] = useState(null);
+
+  const tryParse = (raw) => {
+    const result = validateCollection(raw);
+    if (result.error) { setError(result.error); setPreview(null); return null; }
+    setError(''); setPreview(result.json); return result.json;
+  };
+
+  const handleTextChange = (val) => {
+    setText(val);
+    if (val.trim()) tryParse(val); else { setPreview(null); setError(''); }
+  };
+
+  const handleLoadUrl = async () => {
+    if (!url.trim()) return;
+    setLoading(true); setError('');
+    try {
+      const r = await fetch(url.trim());
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const raw = await r.text();
+      setText(raw); tryParse(raw);
+    } catch (e) { setError('Не удалось загрузить: ' + e.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleImport = () => {
+    const json = tryParse(text);
+    if (!json) return;
+    onImport(json); onClose();
+  };
+
+  return (
+    <Portal>
+      <div className="cm-overlay" onClick={onClose}>
+        <div className="cm import-modal" onClick={e => e.stopPropagation()}>
+          <div className="cm-head">
+            <span>Импорт коллекции</span>
+            <button className="cm-close" onClick={onClose}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+          <div className="cm-body">
+            <div className="import-tabs">
+              <button className={`import-tab${tab==='paste'?' active':''}`} onClick={()=>setTab('paste')}>Вставить JSON</button>
+              <button className={`import-tab${tab==='url'?' active':''}`} onClick={()=>setTab('url')}>По URL</button>
+            </div>
+
+            {tab === 'url' && (
+              <div className="import-url-row">
+                <input className="cm-input" value={url} onChange={e=>setUrl(e.target.value)}
+                  placeholder="https://raw.githubusercontent.com/…/collection.json"
+                  onKeyDown={e=>e.key==='Enter'&&handleLoadUrl()} />
+                <button className="cm-btn ghost" onClick={handleLoadUrl} disabled={loading} style={{flexShrink:0}}>
+                  {loading ? '…' : 'Загрузить'}
+                </button>
+              </div>
+            )}
+
+            <div className="import-textarea-wrap">
+              <textarea className="cm-textarea import-textarea" value={text}
+                onChange={e=>handleTextChange(e.target.value)}
+                placeholder={'{\n  "name": "Моя коллекция",\n  "items": [...]\n}'}
+                rows={10} spellCheck={false} />
+              {!text && (
+                <button className="import-example-btn" onClick={()=>handleTextChange(SCHEMA_EXAMPLE)}>
+                  Пример схемы →
+                </button>
+              )}
+            </div>
+
+            {error && <div className="import-error">{error}</div>}
+            {preview && !error && (
+              <div className="import-preview">
+                <span className="import-preview-icon">{preview.icon || '📦'}</span>
+                <div>
+                  <div className="import-preview-name">{preview.name}</div>
+                  <div className="import-preview-meta">{preview.items.length} объектов</div>
+                </div>
+              </div>
+            )}
+            <div className="import-hint">
+              💡 Опиши коллекцию в ChatGPT или Claude и попроси сгенерировать JSON по этой схеме — потом вставь сюда
+            </div>
+          </div>
+          <div className="cm-foot">
+            <button className="cm-btn ghost" onClick={onClose}>Отмена</button>
+            <button className="cm-btn primary" onClick={handleImport} disabled={!preview||!!error}>
+              Добавить коллекцию
+            </button>
+          </div>
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+// ============================================================
 // Universe Management Panel (dropdown extension)
 // ============================================================
 
@@ -469,9 +638,11 @@ function UniverseManagerPanel({
   onEdit,
   onDelete,
   onToggle,
+  onImport,
 }) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingUniverse, setEditingUniverse] = useState(null);
   const [deletingUniverse, setDeletingUniverse] = useState(null);
   const [deleteItemsCount, setDeleteItemsCount] = useState(0);
@@ -555,6 +726,15 @@ function UniverseManagerPanel({
             {!isProtected && (
               <div className="universe-manage-actions">
                 <button
+                  className="universe-manage-btn export"
+                  onClick={e => { e.stopPropagation(); exportUniverseAsJSON(u, items); }}
+                  title="Экспорт JSON"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
                   className="universe-manage-btn edit"
                   onClick={e => handleEditClick(u, e)}
                   title="Редактировать"
@@ -578,16 +758,27 @@ function UniverseManagerPanel({
         );
       })}
       
-      {/* Create new universe button */}
-      <button 
-        className="universe-create-btn"
-        onClick={() => { setEditingUniverse(null); setEditModalOpen(true); }}
-      >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-        Создать коллекцию
-      </button>
+      {/* Action buttons */}
+      <div className="universe-action-row">
+        <button
+          className="universe-create-btn"
+          onClick={() => { setEditingUniverse(null); setEditModalOpen(true); }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          Создать
+        </button>
+        <button
+          className="universe-create-btn import"
+          onClick={() => setImportModalOpen(true)}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 9V1M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Импорт JSON
+        </button>
+      </div>
 
       {/* Edit/Create Modal */}
       {editModalOpen && (
@@ -606,6 +797,14 @@ function UniverseManagerPanel({
           itemsCount={deleteItemsCount}
           onConfirm={handleDeleteConfirm}
           onClose={() => { setDeleteModalOpen(false); setDeletingUniverse(null); }}
+        />
+      )}
+
+      {/* Import Modal */}
+      {importModalOpen && (
+        <ImportCollectionModal
+          onImport={onImport}
+          onClose={() => setImportModalOpen(false)}
         />
       )}
     </>
