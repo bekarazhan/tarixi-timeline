@@ -8,49 +8,86 @@ const CUSTOM_COLORS = [
   '#4dabf7','#da77f2','#f783ac','#63e6be',
 ];
 
-// Все фасеты открытые — пользователь может добавлять теги в любой
-
-// ── Создание нового тега прямо в форме ─────────────────────────
-function InlineTagCreator({ facetId, onAdd }) {
+// ── #-инпут с автокомплитом для тегов ──────────────────────────
+function TagInput({ selected, onChange, onAdd, allTags }) {
+  const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [color, setColor] = useState(CUSTOM_COLORS[0]);
   const inputRef = useRef();
 
-  const reset = () => { setOpen(false); setName(''); setColor(CUSTOM_COLORS[0]); };
+  const suggestions = (allTags || []).filter(t => {
+    if (!q) return true;
+    return t.name.toLowerCase().includes(q.toLowerCase()) || t.id.includes(q.toLowerCase());
+  }).slice(0, 8);
 
-  const commit = () => {
-    if (!name.trim()) return;
-    onAdd({ id: 'custom-' + Date.now(), name: name.trim(), facet: facetId, color, system: false });
-    reset();
+  const canCreate = q.trim() && !suggestions.some(t => t.name.toLowerCase() === q.trim().toLowerCase());
+
+  const toggle = (id) => {
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id]);
+    setQ('');
+    inputRef.current?.focus();
   };
 
-  if (!open) return (
-    <button className="cm-tag cm-tag-new" onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}>
-      + свой
-    </button>
-  );
+  const create = (name) => {
+    const tag = { id: 'custom-' + Date.now(), name: name.trim(), facet: 'domain', color: '#818cf8' };
+    onAdd(tag);
+    onChange([...selected, tag.id]);
+    setQ('');
+    inputRef.current?.focus();
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (suggestions.length > 0) toggle(suggestions[0].id);
+      else if (canCreate) create(q.trim());
+    }
+    if (e.key === 'Backspace' && !q && selected.length > 0) onChange(selected.slice(0, -1));
+    if (e.key === 'Escape') { setOpen(false); setQ(''); }
+  };
 
   return (
-    <div className="cm-tag-creator">
-      <input
-        ref={inputRef}
-        className="cm-input cm-input-sm"
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Название тега"
-        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') reset(); }}
-      />
-      <div className="cm-colors">
-        {CUSTOM_COLORS.map(c => (
-          <button key={c} className={`cm-color ${color === c ? 'on' : ''}`}
-            style={{ background: c }} onClick={() => setColor(c)} />
-        ))}
+    <div className="tag-input">
+      <div className="tag-input-row" onClick={() => inputRef.current?.focus()}>
+        {selected.map(id => {
+          const tag = (allTags || []).find(t => t.id === id) || window.TAG_MAP?.[id];
+          if (!tag) return null;
+          return (
+            <span key={id} className="tag-chip" style={{ '--tc': tag.color }}>
+              {tag.name}
+              <button className="tag-chip-x" onMouseDown={e => { e.preventDefault(); toggle(id); }}>×</button>
+            </span>
+          );
+        })}
+        <input
+          ref={inputRef}
+          className="tag-input-field"
+          value={q}
+          placeholder={selected.length ? '' : '#тег…'}
+          onChange={e => { setQ(e.target.value.replace(/^#/, '')); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={onKey}
+        />
       </div>
-      <div className="cm-tag-creator-foot">
-        <button className="cm-tag-creator-cancel" onClick={reset}>отмена</button>
-        <button className="cm-btn primary cm-btn-sm" disabled={!name.trim()} onClick={commit}>Создать</button>
-      </div>
+      {open && (suggestions.length > 0 || canCreate) && (
+        <div className="tag-input-drop">
+          {suggestions.map(tag => (
+            <div key={tag.id} className={`tag-input-opt${selected.includes(tag.id) ? ' on' : ''}`}
+              onMouseDown={e => { e.preventDefault(); toggle(tag.id); }}>
+              <span className="tag-opt-dot" style={{ background: tag.color }} />
+              <span>{tag.name}</span>
+              {selected.includes(tag.id) && <span className="tag-opt-check">✓</span>}
+            </div>
+          ))}
+          {canCreate && (
+            <div className="tag-input-opt create"
+              onMouseDown={e => { e.preventDefault(); create(q.trim()); }}>
+              <span className="tag-opt-dot" style={{ background: '#818cf8' }} />
+              <span>Создать «{q}»</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -58,23 +95,13 @@ function InlineTagCreator({ facetId, onAdd }) {
 // ── Форма создания объекта ──────────────────────────────────────
 function CreateModal({ onClose, onSave, allTags, onAddTag }) {
   const [kind,    setKind]    = useState('event');
-  const [subkind, setSubkind] = useState('person');
   const [name,    setName]    = useState('');
   const [start,   setStart]   = useState('');
   const [end,     setEnd]     = useState('');
-  const [selTags, setSelTags] = useState(['kz']);
+  const [selTags, setSelTags] = useState([]);
   const [desc,    setDesc]    = useState('');
 
-  const toggleTag = (id) => setSelTags(prev =>
-    prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
-  );
-
-  // Создать новый тег и сразу выбрать его
-  const handleNewTag = (tag) => {
-    onAddTag(tag);
-    setSelTags(prev => [...prev, tag.id]);
-  };
-
+  const isPerson = kind === 'subject' && selTags.includes('person');
   const valid = name.trim() && start;
 
   const handleSave = () => {
@@ -84,7 +111,6 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     onSave({
       id: 'user-' + Date.now(),
       kind,
-      subkind: kind === 'subject' ? subkind : undefined,
       name: name.trim(),
       tags: selTags,
       start: s, end: e,
@@ -94,7 +120,10 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     onClose();
   };
 
-  const domainTags = allTags.filter(t => t.facet === 'domain');
+  const handleAddTag = (tag) => {
+    onAddTag(tag);
+    setSelTags(prev => [...prev, tag.id]);
+  };
 
   return (
     <div className="cm-overlay" onClick={onClose}>
@@ -118,17 +147,6 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
             </div>
           </div>
 
-          {kind === 'subject' && (
-            <div className="cm-field">
-              <label className="cm-label">Подтип субъекта</label>
-              <div className="cm-seg">
-                {[['person','👤 Человек'],['people','👥 Народность'],['state','🏛 Государство'],['city','🏙 Город']].map(([v,l]) => (
-                  <button key={v} className={subkind===v ? 'active' : ''} onClick={() => setSubkind(v)}>{l}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div className="cm-field">
             <label className="cm-label">Название</label>
             <input className="cm-input" value={name} onChange={e => setName(e.target.value)} placeholder="Например: Битва при Шайхи"/>
@@ -136,14 +154,12 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
 
           <div className="cm-row">
             <div className="cm-field">
-              <label className="cm-label">{kind === 'subject' && subkind === 'person' ? 'Год рождения' : 'Начало'}</label>
+              <label className="cm-label">{isPerson ? 'Год рождения' : 'Начало'}</label>
               <input className="cm-input" type="number" value={start} onChange={e => setStart(e.target.value)} placeholder="-500"/>
             </div>
             {kind !== 'event' && (
               <div className="cm-field">
-                <label className="cm-label">
-                  {kind === 'subject' && subkind === 'person' ? 'Год смерти' : 'Конец'}
-                </label>
+                <label className="cm-label">{isPerson ? 'Год смерти' : 'Конец'}</label>
                 <input className="cm-input" type="number" value={end} onChange={e => setEnd(e.target.value)} placeholder="500"/>
               </div>
             )}
@@ -151,17 +167,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
 
           <div className="cm-field">
             <label className="cm-label">Теги</label>
-            <div className="cm-tag-list">
-              {domainTags.map(tag => (
-                <button
-                  key={tag.id}
-                  className={`cm-tag ${selTags.includes(tag.id) ? 'on' : ''}`}
-                  style={{ '--tc': tag.color }}
-                  onClick={() => toggleTag(tag.id)}
-                >{tag.name}</button>
-              ))}
-              <InlineTagCreator facetId="domain" onAdd={handleNewTag} />
-            </div>
+            <TagInput selected={selTags} onChange={setSelTags} onAdd={handleAddTag} allTags={allTags} />
           </div>
 
           <div className="cm-field">
@@ -341,10 +347,6 @@ function App() {
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
   const [activeKinds, setActiveKinds] = useState(() => new Set(['subject', 'event', 'era']));
-  const [activeSubkinds, setActiveSubkinds] = useState(
-    () => new Set(Object.keys(window.SUBKIND_META || {}))
-  );
-  const [customSubkinds, setCustomSubkinds] = useState([]);
   const [activeUniverses, setActiveUniverses] = useState(() => new Set([window.DEFAULT_UNIVERSE?.id || 'main']));
   const [universes, setUniverses] = useState(() => [...(window.UNIVERSE_META || [window.DEFAULT_UNIVERSE])]);
 
@@ -451,20 +453,6 @@ function App() {
     });
   };
 
-  const handleToggleSubkind = (sk) => {
-    setActiveSubkinds(prev => {
-      const next = new Set(prev);
-      if (next.has(sk)) next.delete(sk); else next.add(sk);
-      return next;
-    });
-  };
-
-  const handleAddSubkind = (sk) => {
-    if (window.SUBKIND_META) window.SUBKIND_META[sk.id] = { label: sk.label, icon: sk.icon };
-    setCustomSubkinds(prev => [...prev, sk]);
-    setActiveSubkinds(prev => new Set([...prev, sk.id]));
-  };
-
   const rowHeight = t.density === 'compact' ? 18 : t.density === 'spacious' ? 32 : 22;
 
   return (
@@ -513,10 +501,6 @@ function App() {
             onToggleTag={handleToggleTag}
             activeKinds={activeKinds}
             onToggleKind={handleToggleKind}
-            activeSubkinds={activeSubkinds}
-            onToggleSubkind={handleToggleSubkind}
-            customSubkinds={customSubkinds}
-            onAddSubkind={handleAddSubkind}
             items={filteredItems}
             allTags={allTags}
             onAddTag={handleAddTag}
@@ -528,7 +512,6 @@ function App() {
             items={filteredItems}
             activeTags={activeTags}
             activeKinds={activeKinds}
-            activeSubkinds={activeSubkinds}
             selected={selected}
             onSelect={handleSelectAndZoom}
             density={t.density}
@@ -547,7 +530,6 @@ function App() {
               viewEnd={view.end}
               setView={setView}
               activeKinds={activeKinds}
-              activeSubkinds={activeSubkinds}
             />
           )}
         </div>

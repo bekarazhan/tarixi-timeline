@@ -125,7 +125,7 @@ function makeScale(viewStart, viewEnd, width, mode) {
 
 // ===== главный компонент =====
 function Timeline({
-  items, activeTags, activeKinds, activeSubkinds, selected, onSelect,
+  items, activeTags, activeKinds, selected, onSelect,
   density, scaleMode, viewStart, viewEnd, setView, onCursorYearChange,
   rowHeight, showConnections, enablePresentBuffer = true,
 }) {
@@ -153,10 +153,9 @@ function Timeline({
   const filtered = useMemo(() =>
     items.filter(it =>
       window.isItemVisible(it, activeTags) &&
-      (!activeKinds || activeKinds.has(it.kind)) &&
-      (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
+      (!activeKinds || activeKinds.has(it.kind))
     ),
-    [items, activeTags, activeKinds, activeSubkinds]);
+    [items, activeTags, activeKinds]);
 
   // -- packing lanes per track --
   // зависит от viewport: при широком зуме события нужно разводить по lanes
@@ -979,7 +978,7 @@ function VerticalScrollIndicator({ scrollY, maxScrollY, totalHeight, viewportHei
 // ===== Minimap =====
 // Uses MINIMAP_MIN/MINIMAP_MAX constants defined at top of file
 
-function Minimap({ items, viewStart, viewEnd, setView, activeKinds, activeSubkinds, enablePresentBuffer = true }) {
+function Minimap({ items, viewStart, viewEnd, setView, activeKinds, enablePresentBuffer = true }) {
   const wrapRef = useRef();
   const [w, setW] = useState(800);
 
@@ -996,10 +995,7 @@ function Minimap({ items, viewStart, viewEnd, setView, activeKinds, activeSubkin
 
   const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MINIMAP_MIN || ep.end >= MINIMAP_MIN);
 
-  const visibleItems = items.filter(it =>
-    (!activeKinds || activeKinds.has(it.kind)) &&
-    (it.kind !== 'subject' || !activeSubkinds || activeSubkinds.has(it.subkind || 'person'))
-  );
+  const visibleItems = items.filter(it => (!activeKinds || activeKinds.has(it.kind)));
 
   // pan window via drag
   const dragRef = useRef(null);

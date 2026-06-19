@@ -56,64 +56,10 @@ function LegendTagCreator({ facetId, onAdd }) {
   );
 }
 
-// ── Инлайн-создание подтипа субъекта ─────────────────────────
-function SubkindCreator({ onAdd }) {
-  const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState('');
-  const [icon, setIcon] = useState('');
-  const inputRef = useRef();
-
-  const reset = () => { setOpen(false); setLabel(''); setIcon(''); };
-  const commit = () => {
-    if (!label.trim()) return;
-    const id = 'sk-' + label.trim().toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-    onAdd({ id, label: label.trim(), icon: icon.trim() || '·' });
-    reset();
-  };
-
-  if (!open) return (
-    <button className="legend-tag-add" onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0); }}>
-      <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
-        <path d="M4.5 1v7M1 4.5h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-      подтип
-    </button>
-  );
-
-  return (
-    <div className="legend-tag-creator">
-      <div style={{ display: 'flex', gap: 6 }}>
-        <input
-          style={{ width: 36, textAlign: 'center', flexShrink: 0 }}
-          className="legend-tag-input"
-          value={icon}
-          onChange={e => setIcon(e.target.value)}
-          placeholder="🐴"
-          maxLength={2}
-        />
-        <input
-          ref={inputRef}
-          className="legend-tag-input"
-          value={label}
-          onChange={e => setLabel(e.target.value)}
-          placeholder="Название"
-          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') reset(); }}
-        />
-      </div>
-      <div className="legend-tag-creator-foot">
-        <button className="legend-tag-cancel" onClick={reset}>Отмена</button>
-        <button className="legend-tag-ok" disabled={!label.trim()} onClick={commit}>Создать</button>
-      </div>
-    </div>
-  );
-}
-
 // ── Главный компонент ─────────────────────────────────────────
 function Legend({
   activeTags, onToggleTag,
   activeKinds, onToggleKind,
-  activeSubkinds, onToggleSubkind,
-  customSubkinds, onAddSubkind,
   items, allTags, onAddTag,
 }) {
   allTags = allTags || window.TAG_CATALOG;
@@ -130,30 +76,7 @@ function Legend({
     era:     items.filter(i => i.kind === 'era').length,
   }), [items]);
 
-  // Все известные субкинды: built-in + custom + найденные в данных
-  const allSubkindMeta = useMemo(() => {
-    const base = { ...(window.SUBKIND_META || {}) };
-    (customSubkinds || []).forEach(sk => { base[sk.id] = { label: sk.label, icon: sk.icon }; });
-    // добавить субкинды из данных, которых нет в мете
-    items.filter(i => i.kind === 'subject').forEach(i => {
-      const sk = i.subkind || 'person';
-      if (!base[sk]) base[sk] = { label: sk, icon: '·' };
-    });
-    return base;
-  }, [items, customSubkinds]);
-
-  const subkindCounts = useMemo(() => {
-    const c = {};
-    items.filter(i => i.kind === 'subject').forEach(i => {
-      const sk = i.subkind || 'person';
-      c[sk] = (c[sk] || 0) + 1;
-    });
-    return c;
-  }, [items]);
-
   const domainTags = allTags.filter(t => t.facet === 'domain');
-
-  const subjectOn = activeKinds.has('subject');
 
   return (
     <aside className="legend">
@@ -161,40 +84,14 @@ function Legend({
       {/* ── Тип объекта ──────────────────────────────── */}
       <div className="legend-facet">
         <div className="legend-section-title">Тип объекта</div>
-        
         {['subject', 'event', 'era'].map(k => {
           const m = KIND_META[k];
           const on = activeKinds.has(k);
           return (
-            <div key={k}>
-              <div className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
-                <span className={`legend-swatch kind-${k}`} style={{ '--c': m.color }}></span>
-                <span className="legend-label">{m.label}</span>
-                <span className="legend-count">{kindCounts[k]}</span>
-              </div>
-
-              {/* Субкинды — под Субъектами, всегда показываем */}
-              {k === 'subject' && (
-                <div className="legend-subkind-group" data-parent-off={!subjectOn}>
-                  {Object.entries(allSubkindMeta).map(([sk, meta]) => {
-                    const skOn = subjectOn && (activeSubkinds ? activeSubkinds.has(sk) : true);
-                    return (
-                      <div
-                        key={sk}
-                        className="legend-subkind"
-                        data-off={!skOn}
-                        onClick={() => onToggleSubkind && onToggleSubkind(sk)}
-                        title={`${meta.label} — клик чтобы скрыть/показать`}
-                      >
-                        <span className="legend-subkind-icon">{meta.icon}</span>
-                        <span className="legend-subkind-label">{meta.label}</span>
-                        <span className="legend-count">{subkindCounts[sk] || 0}</span>
-                      </div>
-                    );
-                  })}
-                  {onAddSubkind && <SubkindCreator onAdd={onAddSubkind} />}
-                </div>
-              )}
+            <div key={k} className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
+              <span className={`legend-swatch kind-${k}`} style={{ '--c': m.color }}></span>
+              <span className="legend-label">{m.label}</span>
+              <span className="legend-count">{kindCounts[k]}</span>
             </div>
           );
         })}
