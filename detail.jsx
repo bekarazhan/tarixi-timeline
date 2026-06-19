@@ -48,6 +48,12 @@ function DetailPanel({ item, onClose, onSelect, onEdit, allItems }) {
         </svg>
       </button>
 
+      {cur.photoUrl && (
+        <div className="detail-photo">
+          <img src={cur.photoUrl} alt={cur.name} onError={e => { e.target.closest('.detail-photo').style.display = 'none'; }} />
+        </div>
+      )}
+
       <div className="detail-hero" style={{ '--c': color }}>
         <div className="detail-cat">
           <span className="dot"></span>

@@ -2081,6 +2081,19 @@ button { font-family: inherit; }
 }
 .detail-close:hover { color: var(--text-0); border-color: var(--line-strong); }
 
+.detail-photo {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.detail-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
 .detail-hero {
   padding: 28px 26px 18px;
   border-bottom: 1px solid var(--line);

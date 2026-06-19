@@ -107,7 +107,8 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
 
   // Exclude virtual derived universes (kz, world) — those are tag-based filters, not real containers
   const selectableUniverses = (universes || []).filter(u => u.id !== 'kz' && u.id !== 'world');
-  const [desc,    setDesc]    = useState(initialItem?.desc    || '');
+  const [desc,    setDesc]    = useState(initialItem?.desc     || '');
+  const [photoUrl, setPhotoUrl] = useState(initialItem?.photoUrl || '');
 
   const isPerson = kind === 'subject' && selTags.includes('person');
   const valid = name.trim() && start;
@@ -116,16 +117,17 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
     if (!valid) return;
     const s = parseInt(start);
     const e = kind === 'event' ? s : parseInt(end || start);
+    const common = {
+      kind, name: name.trim(), tags: selTags, start: s, end: e,
+      universe: universeId,
+      lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
+      desc: desc.trim(),
+      photoUrl: photoUrl.trim() || undefined,
+    };
     if (isEdit) {
-      onUpdate({ ...initialItem, kind, name: name.trim(), tags: selTags, start: s, end: e,
-        universe: universeId,
-        lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
-        desc: desc.trim() });
+      onUpdate({ ...initialItem, ...common });
     } else {
-      onSave({ id: 'user-' + Date.now(), kind, name: name.trim(), tags: selTags, start: s, end: e,
-        universe: universeId,
-        lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
-        desc: desc.trim() });
+      onSave({ id: 'user-' + Date.now(), ...common });
     }
     onClose();
   };
@@ -200,6 +202,11 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
           <div className="cm-field">
             <label className="cm-label">Описание <span className="cm-hint">— необязательно</span></label>
             <textarea className="cm-textarea" value={desc} onChange={e => setDesc(e.target.value)} rows={3} placeholder="Краткое описание события…"/>
+          </div>
+
+          <div className="cm-field">
+            <label className="cm-label">Фото <span className="cm-hint">— URL изображения</span></label>
+            <input className="cm-input" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://…"/>
           </div>
         </div>
 
