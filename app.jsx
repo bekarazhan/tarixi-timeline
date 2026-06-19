@@ -439,7 +439,7 @@ function App() {
   }, [view, setView]);
 
   const handleSelectAndZoom = useCallback((item) => {
-    if (item.kind === 'era') {
+    if (item?.kind === 'era') {
       const pad = (item.end - item.start) * 0.15;
       setView(item.start - pad, item.end + pad);
     }
