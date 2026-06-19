@@ -317,46 +317,45 @@ function UniverseEditModal({ universe, onSave, onClose, isEdit = false }) {
           {/* Icon Selector */}
           <div className="cm-field">
             <label className="cm-label">Иконка</label>
-            <div className="icon-selector">
-              <button 
-                className="icon-selector-btn"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              >
-                <span className="icon-selector-current">{icon}</span>
-                <span className="icon-selector-arrow">▼</span>
-              </button>
-              
-              {showEmojiPicker && (
-                <div className="emoji-picker">
-                  <div className="emoji-picker-categories">
-                    {Object.keys(EMOJI_OPTIONS).map(cat => (
-                      <button
-                        key={cat}
-                        className={`emoji-cat-btn ${selectedCategory === cat ? 'active' : ''}`}
-                        onClick={() => setSelectedCategory(cat)}
-                      >
-                        {cat === 'default' ? '🌍' : cat === 'alt-history' ? '🌀' : 
-                         cat === 'fiction' ? '📚' : cat === 'science' ? '🔬' :
-                         cat === 'nature' ? '🌿' : cat === 'animals' ? '🦁' :
-                         cat === 'people' ? '👤' : cat === 'places' ? '🏛️' :
-                         cat === 'events' ? '⚔️' : '💫'}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="emoji-picker-grid">
-                    {allEmojis.map(emoji => (
-                      <button
-                        key={emoji}
-                        className={`emoji-btn ${icon === emoji ? 'active' : ''}`}
-                        onClick={() => { setIcon(emoji); setShowEmojiPicker(false); }}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+            <button
+              className="icon-selector-btn"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
+              <span className="icon-selector-current">{icon}</span>
+              <span style={{ flex: 1, textAlign: 'left', fontSize: 13, color: 'var(--text-2)' }}>Выбрать иконку</span>
+              <span className="icon-selector-arrow">{showEmojiPicker ? '▲' : '▼'}</span>
+            </button>
+
+            {showEmojiPicker && (
+              <div className="emoji-picker-inline">
+                <div className="emoji-picker-categories">
+                  {Object.keys(EMOJI_OPTIONS).map(cat => (
+                    <button
+                      key={cat}
+                      className={`emoji-cat-btn ${selectedCategory === cat ? 'active' : ''}`}
+                      onClick={() => setSelectedCategory(cat)}
+                    >
+                      {cat === 'default' ? '🌍' : cat === 'alt-history' ? '🌀' :
+                       cat === 'fiction' ? '📚' : cat === 'science' ? '🔬' :
+                       cat === 'nature' ? '🌿' : cat === 'animals' ? '🦁' :
+                       cat === 'people' ? '👤' : cat === 'places' ? '🏛️' :
+                       cat === 'events' ? '⚔️' : '💫'}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+                <div className="emoji-picker-grid">
+                  {allEmojis.map(emoji => (
+                    <button
+                      key={emoji}
+                      className={`emoji-btn ${icon === emoji ? 'active' : ''}`}
+                      onClick={() => { setIcon(emoji); setShowEmojiPicker(false); }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Color Picker */}
