@@ -6,6 +6,36 @@
 
 ---
 
+## [2026-06-19] Агент: Claude Code | Сессия: Удаление субкиндов, #-инпут тегов
+
+### Что сделано
+- Субкинды (person/people/state/city) превращены в обычные теги в TAG_CATALOG
+- Python-скрипт: поле `subkind: 'X'` удалено из всех items, `'X'` добавлен в конец `tags: [...]`
+- Удалены `SUBKIND_META`, `SubkindCreator`, секция субкиндов из Legend
+- Удалены `activeSubkinds`/`customSubkinds` стейт и хендлеры из App
+- Удалена фильтрация по субкинду из Timeline и Minimap
+- `CreateModal`: убран селектор подтипа, тег-кнопки заменены на `TagInput`
+- `TagInput` — новый компонент: `#`-prefix, автокомплит из TAG_CATALOG, чипы с ×, Backspace удаляет последний, Enter выбирает первый матч или создаёт новый тег
+
+### Что изменилось в файлах
+- `data.jsx` — удалён SUBKIND_META, добавлены entity-теги в TAG_CATALOG, 54 items обновлены
+- `legend.jsx` — удалена SubkindCreator и весь subkind-блок
+- `app.jsx` — InlineTagCreator → TagInput, упрощён CreateModal, убраны subkind-стейты
+- `timeline.jsx` — убраны activeSubkinds из Timeline и Minimap
+- `styles.css` — CSS для TagInput (chip, dropdown, autocomplete)
+- `index.html` — версии v32
+
+### Коммиты
+- `6532280` — refactor: replace subkinds with tags, add #-input with autocomplete
+
+### Следующие шаги
+- Пустое состояние таймлайна
+- Новый объект в активной коллекции, не в main
+- Проверить `findContemporaries` в Detail panel
+- Поиск: "эпоху" → "период" в placeholder
+
+---
+
 ## [2026-06-19] Агент: Claude Code | Сессия: Цветовая система, удаление Place-тегов
 
 ### Что сделано
