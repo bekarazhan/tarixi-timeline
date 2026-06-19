@@ -955,6 +955,8 @@ button { font-family: inherit; }
   overflow: hidden;
   cursor: grab;
   padding-bottom: 48px; /* Space for zoom handles */
+  overscroll-behavior: none;
+  touch-action: none;
 }
 .tl-stage[data-dragging="true"] { cursor: grabbing; }
 

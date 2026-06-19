@@ -494,6 +494,19 @@ function Timeline({
     return () => window.removeEventListener('keyup', handleKeyUp);
   }, []);
 
+  // Non-passive wheel listener — React registers onWheel as passive since v17,
+  // which makes preventDefault() a no-op and lets the browser trigger back/forward
+  // navigation on horizontal swipe. We attach directly to the DOM to bypass this.
+  const onWheelRef = useRef(onWheel);
+  useEffect(() => { onWheelRef.current = onWheel; });
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const handler = (e) => onWheelRef.current(e);
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, []);
+
   // ============== ITEM RENDER ===============
   const renderItem = (item) => {
     const [s, e] = window.itemRange(item);
@@ -583,7 +596,6 @@ function Timeline({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onPointerLeave={onLeave}
-      onWheel={onWheel}
       data-scroll-at-top={atTop ? 'true' : 'false'}
       data-scroll-at-bottom={atBottom ? 'true' : 'false'}
     >
