@@ -6,6 +6,36 @@
 
 ---
 
+## [2026-06-19] Агент: Claude Code | Сессия: UX-фиксы, фото, коллекции, навигация
+
+### Что сделано
+- **Цвет при фильтрации**: `colorForItem(item, activeTags)` — цвет берётся от первого активного тега, а не от первого тега вообще
+- **Эпохи без тега политика**: ancient/medieval/modern/contemporary/steppe-era очищены от некорректного `politics`-тега (был назначен Python-скриптом как fallback для global)
+- **Тачпад — навигация назад**: React onWheel пассивный с v17 → заменён на DOM `addEventListener({ passive: false })` + `overscroll-behavior: none` на `.tl-stage`
+- **Минимап-баг**: `onMouseMove` не обновлял `lastX` → окошко бежало быстрее мыши. Фикс: `dragRef.current.lastX = e.clientX`
+- **Закрытие панели кликом**: `onPointerUp` проверяет движение < 5px → `onSelect(null)`. Фикс `null.kind` через `item?.kind`
+- **Коллекция в форме создания**: селектор коллекции (пилюли) в CreateModal/EditModal, дефолт = единственная активная коллекция
+- **Фото**: поле URL в форме, отображение как 160px-полоса над hero в DetailPanel, скрывается при ошибке загрузки
+- **Главный тег**: первый чип в TagInput выделен `border-left` в цвет тега
+- **Модал редактирования**: CreateModal с `initialItem` для edit-режима, кнопка "Редактировать" в DetailPanel
+
+### Коммиты
+- `904f73e` — colorForItem respects active filters
+- `3fe6888` — remove incorrect politics tag from world eras
+- `de93e72` — prevent browser back/forward on trackpad swipe
+- `9b3bf1e` — minimap drag offset + close panel on empty click
+- `6698079` — null check in handleSelectAndZoom
+- `e8c17ec` — collection selector in create/edit modal
+- `0460a36` — photo field for events and persons
+
+### Следующие шаги
+- Пустое состояние таймлайна
+- Новый объект в активной коллекции (сейчас есть дефолт, но можно улучшить)
+- Проверить `findContemporaries` в Detail panel
+- Поиск: "эпоху" → "период" в placeholder
+
+---
+
 ## [2026-06-19] Агент: Claude Code | Сессия: Удаление субкиндов, #-инпут тегов
 
 ### Что сделано
