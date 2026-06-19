@@ -421,11 +421,18 @@ button { font-family: inherit; }
   z-index: 50;
   min-width: 280px;
   max-height: 400px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
   transition: all 0.15s ease;
+}
+
+.universe-options-list {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .universe-dropdown[data-open="true"] {
@@ -2252,26 +2259,115 @@ button { font-family: inherit; }
 .tl-tooltip-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
 .tl-tooltip-yrs { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
 /* ── Import Collection Modal ─────────────────────────────── */
-.import-modal { max-width: 500px; }
-.import-tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
-.import-tab { background: none; border: none; padding: 5px 12px; border-radius: 4px; color: var(--text-2); cursor: pointer; font-size: 13px; }
-.import-tab.active { background: var(--bg-3); color: var(--text-0); font-weight: 500; }
-.import-url-row { display: flex; gap: 8px; margin-bottom: 10px; }
-.import-textarea-wrap { position: relative; }
-.import-textarea { font-family: var(--font-mono); font-size: 11px; min-height: 180px; resize: vertical; }
-.import-example-btn { position: absolute; bottom: 8px; right: 8px; background: var(--bg-3); border: 1px solid var(--line); color: var(--text-2); font-size: 11px; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-.import-example-btn:hover { color: var(--text-0); }
-.import-error { color: #ef4444; font-size: 12px; margin-top: 8px; padding: 6px 8px; background: rgba(239,68,68,0.07); border-radius: 4px; }
-.import-preview { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; background: var(--bg-3); border-radius: 6px; border: 1px solid var(--line); }
-.import-preview-icon { font-size: 22px; }
-.import-preview-name { font-weight: 600; font-size: 13px; }
-.import-preview-meta { font-size: 11px; color: var(--text-3); margin-top: 1px; }
-.import-hint { font-size: 11px; color: var(--text-3); margin-top: 10px; padding: 8px 10px; background: var(--bg-3); border-radius: 4px; line-height: 1.5; }
+.import-modal {
+  width: 520px;
+}
+.import-url-row {
+  display: flex;
+  gap: 8px;
+}
+.import-url-row .cm-input {
+  flex: 1;
+  height: 36px;
+}
+.import-url-row .cm-btn {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.import-textarea-wrap {
+  position: relative;
+}
+.import-textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  min-height: 180px;
+  resize: vertical;
+}
+.import-example-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.import-example-btn:hover {
+  color: var(--text-0);
+}
+.import-error {
+  color: #ef4444;
+  font-size: 12px;
+  padding: 6px 8px;
+  background: rgba(239, 68, 68, 0.07);
+  border-radius: 4px;
+}
+.import-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-3);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.import-preview-icon {
+  font-size: 22px;
+}
+.import-preview-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+.import-preview-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 1px;
+}
+.import-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 8px 10px;
+  background: var(--bg-3);
+  border-radius: 4px;
+  line-height: 1.5;
+}
 
 /* Universe action row */
-.universe-action-row { display: flex; gap: 6px; padding: 8px 12px 4px; }
-.universe-action-row .universe-create-btn { flex: 1; }
-.universe-create-btn.import { color: var(--text-2); }
+.universe-action-row {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-3);
+}
+.universe-action-row .universe-create-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text-1);
+  font: 500 12.5px var(--font-ui);
+  text-align: center;
+}
+.universe-action-row .universe-create-btn:hover {
+  background: var(--bg-1);
+  border-color: var(--line-strong);
+  color: var(--text-0);
+}
+.universe-action-row .universe-create-btn svg {
+  color: var(--text-2);
+}
 
 /* Export button */
 .universe-manage-btn.export { color: var(--text-3); }

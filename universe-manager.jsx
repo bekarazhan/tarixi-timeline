@@ -572,44 +572,63 @@ function ImportCollectionModal({ onImport, onClose }) {
             </button>
           </div>
           <div className="cm-body">
-            <div className="import-tabs">
-              <button className={`import-tab${tab==='paste'?' active':''}`} onClick={()=>setTab('paste')}>Вставить JSON</button>
-              <button className={`import-tab${tab==='url'?' active':''}`} onClick={()=>setTab('url')}>По URL</button>
+            <div className="cm-field">
+              <label className="cm-label">Источник импорта</label>
+              <div className="cm-seg">
+                <button className={tab === 'paste' ? 'active' : ''} onClick={() => setTab('paste')}>
+                  Вставить JSON
+                </button>
+                <button className={tab === 'url' ? 'active' : ''} onClick={() => setTab('url')}>
+                  По ссылке (URL)
+                </button>
+              </div>
             </div>
 
             {tab === 'url' && (
-              <div className="import-url-row">
-                <input className="cm-input" value={url} onChange={e=>setUrl(e.target.value)}
-                  placeholder="https://raw.githubusercontent.com/…/collection.json"
-                  onKeyDown={e=>e.key==='Enter'&&handleLoadUrl()} />
-                <button className="cm-btn ghost" onClick={handleLoadUrl} disabled={loading} style={{flexShrink:0}}>
-                  {loading ? '…' : 'Загрузить'}
-                </button>
+              <div className="cm-field">
+                <label className="cm-label">Ссылка на JSON-файл</label>
+                <div className="import-url-row">
+                  <input className="cm-input" value={url} onChange={e=>setUrl(e.target.value)}
+                    placeholder="https://raw.githubusercontent.com/…/collection.json"
+                    onKeyDown={e=>e.key==='Enter'&&handleLoadUrl()} />
+                  <button className="cm-btn ghost" onClick={handleLoadUrl} disabled={loading} style={{flexShrink:0}}>
+                    {loading ? '…' : 'Загрузить'}
+                  </button>
+                </div>
               </div>
             )}
 
-            <div className="import-textarea-wrap">
-              <textarea className="cm-textarea import-textarea" value={text}
-                onChange={e=>handleTextChange(e.target.value)}
-                placeholder={'{\n  "name": "Моя коллекция",\n  "items": [...]\n}'}
-                rows={10} spellCheck={false} />
-              {!text && (
-                <button className="import-example-btn" onClick={()=>handleTextChange(SCHEMA_EXAMPLE)}>
-                  Пример схемы →
-                </button>
-              )}
+            <div className="cm-field">
+              <label className="cm-label">
+                {tab === 'paste' ? 'Код коллекции (JSON)' : 'Загруженное содержимое'}
+              </label>
+              <div className="import-textarea-wrap">
+                <textarea className="cm-textarea import-textarea" value={text}
+                  onChange={e=>handleTextChange(e.target.value)}
+                  placeholder={'{\n  "name": "Моя коллекция",\n  "items": [...]\n}'}
+                  rows={10} spellCheck={false} />
+                {!text && (
+                  <button className="import-example-btn" onClick={()=>handleTextChange(SCHEMA_EXAMPLE)}>
+                    Пример схемы →
+                  </button>
+                )}
+              </div>
             </div>
 
             {error && <div className="import-error">{error}</div>}
             {preview && !error && (
-              <div className="import-preview">
-                <span className="import-preview-icon">{preview.icon || '📦'}</span>
-                <div>
-                  <div className="import-preview-name">{preview.name}</div>
-                  <div className="import-preview-meta">{preview.items.length} объектов</div>
+              <div className="cm-field">
+                <label className="cm-label">Предпросмотр коллекции</label>
+                <div className="import-preview">
+                  <span className="import-preview-icon">{preview.icon || '📦'}</span>
+                  <div>
+                    <div className="import-preview-name">{preview.name}</div>
+                    <div className="import-preview-meta">{preview.items.length} объектов</div>
+                  </div>
                 </div>
               </div>
             )}
+            
             <div className="import-hint">
               💡 Опиши коллекцию в ChatGPT или Claude и попроси сгенерировать JSON по этой схеме — потом вставь сюда
             </div>
@@ -690,73 +709,75 @@ function UniverseManagerPanel({
         <span className="universe-dropdown-hint">можно выбрать несколько</span>
       </div>
       
-      {universes.map(u => {
-        const isProtected = u.protected === true || isMainUniverse(u.id);
-        const isActive = activeUniverses && activeUniverses.has(u.id);
-        const itemCount = window.filterByUniverse
-          ? window.filterByUniverse(items, u.id).length
-          : items.filter(item => item.universe === u.id || (!item.universe && u.id === 'main')).length;
+      <div className="universe-options-list">
+        {universes.map(u => {
+          const isProtected = u.protected === true || isMainUniverse(u.id);
+          const isActive = activeUniverses && activeUniverses.has(u.id);
+          const itemCount = window.filterByUniverse
+            ? window.filterByUniverse(items, u.id).length
+            : items.filter(item => item.universe === u.id || (!item.universe && u.id === 'main')).length;
 
-        return (
-          <div key={u.id} className="universe-option-wrapper">
-            <button
-              className="universe-option"
-              data-active={isActive}
-              onClick={() => onToggle(u.id)}
-            >
-              <span className="universe-option-icon">{u.icon}</span>
-              <div className="universe-option-body">
-                <div className="universe-option-name">
-                  {u.name}
-                  {isProtected && <span className="universe-protected-badge">встроенная</span>}
+          return (
+            <div key={u.id} className="universe-option-wrapper">
+              <button
+                className="universe-option"
+                data-active={isActive}
+                onClick={() => onToggle(u.id)}
+              >
+                <span className="universe-option-icon">{u.icon}</span>
+                <div className="universe-option-body">
+                  <div className="universe-option-name">
+                    {u.name}
+                    {isProtected && <span className="universe-protected-badge">встроенная</span>}
+                  </div>
+                  <div className="universe-option-desc">{u.description}</div>
                 </div>
-                <div className="universe-option-desc">{u.description}</div>
-              </div>
-              <div className="universe-option-meta">
-                <span className="universe-item-count">{itemCount}</span>
-                {isActive && (
-                  <svg className="universe-option-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M13 4L6 11l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-            </button>
-            
-            {/* Management buttons */}
-            {!isProtected && (
-              <div className="universe-manage-actions">
-                <button
-                  className="universe-manage-btn export"
-                  onClick={e => { e.stopPropagation(); exportUniverseAsJSON(u, items); }}
-                  title="Экспорт JSON"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button
-                  className="universe-manage-btn edit"
-                  onClick={e => handleEditClick(u, e)}
-                  title="Редактировать"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M10.5 1.5L12.5 3.5L4 12H2V10L10.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-                <button
-                  className="universe-manage-btn delete"
-                  onClick={e => handleDeleteClick(u, e)}
-                  title="Удалить"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M2 3.5L3.5 12.5h7L12 3.5M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })}
+                <div className="universe-option-meta">
+                  <span className="universe-item-count">{itemCount}</span>
+                  {isActive && (
+                    <svg className="universe-option-check" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M13 4L6 11l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+              </button>
+              
+              {/* Management buttons */}
+              {!isProtected && (
+                <div className="universe-manage-actions">
+                  <button
+                    className="universe-manage-btn export"
+                    onClick={e => { e.stopPropagation(); exportUniverseAsJSON(u, items); }}
+                    title="Экспорт JSON"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    className="universe-manage-btn edit"
+                    onClick={e => handleEditClick(u, e)}
+                    title="Редактировать"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M10.5 1.5L12.5 3.5L4 12H2V10L10.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <button
+                    className="universe-manage-btn delete"
+                    onClick={e => handleDeleteClick(u, e)}
+                    title="Удалить"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M2 3.5L3.5 12.5h7L12 3.5M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
       
       {/* Action buttons */}
       <div className="universe-action-row">
