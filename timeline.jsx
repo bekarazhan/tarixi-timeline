@@ -309,8 +309,14 @@ function Timeline({
     setScrollY(dragRef.current.startScrollY + dy);
   };
   const onPointerUp = (e) => {
+    const drag = dragRef.current;
     dragRef.current = null;
     if (stageRef.current) stageRef.current.dataset.dragging = 'false';
+    // Close detail panel if user clicked empty space (not dragged)
+    if (drag) {
+      const moved = Math.abs(e.clientX - drag.startX) + Math.abs(e.clientY - drag.startY);
+      if (moved < 5) onSelect(null);
+    }
   };
 
   // wheel: cmd/ctrl = zoom; shift = horizontal pan; else vertical scroll
@@ -1027,6 +1033,7 @@ function Minimap({ items, viewStart, viewEnd, setView, activeKinds, enablePresen
   const onMouseMove = (e) => {
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.lastX;
+    dragRef.current.lastX = e.clientX;
     const dYears = (dx / w) * (MINIMAP_MAX - MINIMAP_MIN);
     let ns = viewStart + dYears, ne = viewEnd + dYears;
     if (ns < MINIMAP_MIN) { ne += MINIMAP_MIN - ns; ns = MINIMAP_MIN; }
