@@ -93,16 +93,20 @@ function TagInput({ selected, onChange, onAdd, allTags }) {
 }
 
 // ── Форма создания / редактирования объекта ────────────────────
-function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag }) {
+function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag, universes, defaultUniverseId }) {
   const isEdit = !!initialItem;
-  const [kind,    setKind]    = useState(initialItem?.kind    || 'event');
-  const [name,    setName]    = useState(initialItem?.name    || '');
-  const [start,   setStart]   = useState(initialItem?.start != null ? String(initialItem.start) : '');
-  const [end,     setEnd]     = useState(
+  const [kind,      setKind]      = useState(initialItem?.kind || 'event');
+  const [name,      setName]      = useState(initialItem?.name || '');
+  const [start,     setStart]     = useState(initialItem?.start != null ? String(initialItem.start) : '');
+  const [end,       setEnd]       = useState(
     initialItem && initialItem.kind !== 'event' && initialItem.end !== initialItem.start
       ? String(initialItem.end) : ''
   );
-  const [selTags, setSelTags] = useState(initialItem?.tags   || []);
+  const [selTags,   setSelTags]   = useState(initialItem?.tags || []);
+  const [universeId, setUniverseId] = useState(initialItem?.universe || defaultUniverseId || 'main');
+
+  // Exclude virtual derived universes (kz, world) — those are tag-based filters, not real containers
+  const selectableUniverses = (universes || []).filter(u => u.id !== 'kz' && u.id !== 'world');
   const [desc,    setDesc]    = useState(initialItem?.desc    || '');
 
   const isPerson = kind === 'subject' && selTags.includes('person');
@@ -114,10 +118,12 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
     const e = kind === 'event' ? s : parseInt(end || start);
     if (isEdit) {
       onUpdate({ ...initialItem, kind, name: name.trim(), tags: selTags, start: s, end: e,
+        universe: universeId,
         lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
         desc: desc.trim() });
     } else {
       onSave({ id: 'user-' + Date.now(), kind, name: name.trim(), tags: selTags, start: s, end: e,
+        universe: universeId,
         lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
         desc: desc.trim() });
     }
@@ -150,6 +156,23 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
               ))}
             </div>
           </div>
+
+          {selectableUniverses.length > 1 && (
+            <div className="cm-field">
+              <label className="cm-label">Коллекция</label>
+              <div className="cm-universe-list">
+                {selectableUniverses.map(u => (
+                  <button key={u.id}
+                    className={`cm-universe-btn${universeId === u.id ? ' active' : ''}`}
+                    style={{ '--uc': u.color }}
+                    onClick={() => setUniverseId(u.id)}>
+                    <span className="cm-universe-icon">{u.icon}</span>
+                    {u.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="cm-field">
             <label className="cm-label">Название</label>
@@ -357,6 +380,13 @@ function App() {
 
   const allTags = useMemo(() => [...window.TAG_CATALOG, ...customTags], [customTags]);
 
+  // Default collection for new items: single active non-virtual universe, else 'main'
+  const defaultUniverseId = useMemo(() => {
+    const virtual = new Set(['kz', 'world']);
+    const candidates = [...activeUniverses].filter(id => !virtual.has(id));
+    return candidates.length === 1 ? candidates[0] : (window.DEFAULT_UNIVERSE?.id || 'main');
+  }, [activeUniverses]);
+
   // Union-фильтрация по нескольким активным коллекциям
   const filteredItems = useMemo(() => {
     return window.filterByUniverses(items, activeUniverses);
@@ -404,8 +434,9 @@ function App() {
   }, []);
 
   const handleCreate = useCallback((item) => {
-    const itemWithUniverse = window.setUniverseId(item, window.DEFAULT_UNIVERSE?.id || 'main');
-    setItems(prev => [...prev, itemWithUniverse]);
+    // universe is already set by CreateModal; setUniverseId is only a fallback
+    const withUniverse = item.universe ? item : window.setUniverseId(item, window.DEFAULT_UNIVERSE?.id || 'main');
+    setItems(prev => [...prev, withUniverse]);
   }, []);
 
   const handleUpdate = useCallback((updated) => {
@@ -500,6 +531,8 @@ function App() {
           onSave={handleCreate}
           allTags={allTags}
           onAddTag={handleAddTag}
+          universes={universes}
+          defaultUniverseId={defaultUniverseId}
         />
       )}
       {editItem && (
@@ -509,6 +542,8 @@ function App() {
           initialItem={editItem}
           allTags={allTags}
           onAddTag={handleAddTag}
+          universes={universes}
+          defaultUniverseId={defaultUniverseId}
         />
       )}
 

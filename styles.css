@@ -806,6 +806,22 @@ button { font-family: inherit; }
 }
 .cm-seg button + button { border-left: 1px solid var(--line); }
 .cm-seg button.active { background: var(--bg-3); color: var(--text-0); }
+.cm-universe-list {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.cm-universe-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg-2); color: var(--text-2);
+  font-size: 12px; cursor: pointer; transition: border-color .15s, color .15s;
+}
+.cm-universe-btn:hover { border-color: color-mix(in oklab, var(--uc) 50%, transparent); color: var(--text-0); }
+.cm-universe-btn.active {
+  border-color: var(--uc); color: var(--text-0);
+  background: color-mix(in oklab, var(--uc) 12%, var(--bg-2));
+}
+.cm-universe-icon { font-size: 13px; }
+
 .cm-tags-grid {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 12px;
