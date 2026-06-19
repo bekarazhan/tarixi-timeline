@@ -1,6 +1,6 @@
 /* TarixiTimeline — Detail panel */
 
-function DetailPanel({ item, onClose, onSelect, allItems }) {
+function DetailPanel({ item, onClose, onSelect, onEdit, allItems }) {
   // храним последний показанный item — чтобы при закрытии анимация ушла плавно
   const [shown, setShown] = React.useState(item);
   React.useEffect(() => {
@@ -67,13 +67,14 @@ function DetailPanel({ item, onClose, onSelect, allItems }) {
           <div className="detail-section-title">Описание</div>
           <p className="detail-desc">{cur.desc}</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            <button className="detail-cta" style={{ background: color }}>
-              Подробнее
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 6h6m0 0L6 3m3 3L6 9" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </button>
-            <button className="detail-cta ghost">Сравнить эпоху</button>
+            {onEdit && (
+              <button className="detail-cta" style={{ background: color }} onClick={() => onEdit(cur)}>
+                Редактировать
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M8.5 1.5l2 2-6 6H2.5v-2l6-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
           </div>
         </section>
 

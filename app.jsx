@@ -48,11 +48,11 @@ function TagInput({ selected, onChange, onAdd, allTags }) {
   return (
     <div className="tag-input">
       <div className="tag-input-row" onClick={() => inputRef.current?.focus()}>
-        {selected.map(id => {
+        {selected.map((id, idx) => {
           const tag = (allTags || []).find(t => t.id === id) || window.TAG_MAP?.[id];
           if (!tag) return null;
           return (
-            <span key={id} className="tag-chip" style={{ '--tc': tag.color }}>
+            <span key={id} className="tag-chip" data-primary={idx === 0} style={{ '--tc': tag.color }}>
               {tag.name}
               <button className="tag-chip-x" onMouseDown={e => { e.preventDefault(); toggle(id); }}>×</button>
             </span>
@@ -92,14 +92,18 @@ function TagInput({ selected, onChange, onAdd, allTags }) {
   );
 }
 
-// ── Форма создания объекта ──────────────────────────────────────
-function CreateModal({ onClose, onSave, allTags, onAddTag }) {
-  const [kind,    setKind]    = useState('event');
-  const [name,    setName]    = useState('');
-  const [start,   setStart]   = useState('');
-  const [end,     setEnd]     = useState('');
-  const [selTags, setSelTags] = useState([]);
-  const [desc,    setDesc]    = useState('');
+// ── Форма создания / редактирования объекта ────────────────────
+function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag }) {
+  const isEdit = !!initialItem;
+  const [kind,    setKind]    = useState(initialItem?.kind    || 'event');
+  const [name,    setName]    = useState(initialItem?.name    || '');
+  const [start,   setStart]   = useState(initialItem?.start != null ? String(initialItem.start) : '');
+  const [end,     setEnd]     = useState(
+    initialItem && initialItem.kind !== 'event' && initialItem.end !== initialItem.start
+      ? String(initialItem.end) : ''
+  );
+  const [selTags, setSelTags] = useState(initialItem?.tags   || []);
+  const [desc,    setDesc]    = useState(initialItem?.desc    || '');
 
   const isPerson = kind === 'subject' && selTags.includes('person');
   const valid = name.trim() && start;
@@ -108,15 +112,15 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     if (!valid) return;
     const s = parseInt(start);
     const e = kind === 'event' ? s : parseInt(end || start);
-    onSave({
-      id: 'user-' + Date.now(),
-      kind,
-      name: name.trim(),
-      tags: selTags,
-      start: s, end: e,
-      lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
-      desc: desc.trim(),
-    });
+    if (isEdit) {
+      onUpdate({ ...initialItem, kind, name: name.trim(), tags: selTags, start: s, end: e,
+        lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
+        desc: desc.trim() });
+    } else {
+      onSave({ id: 'user-' + Date.now(), kind, name: name.trim(), tags: selTags, start: s, end: e,
+        lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
+        desc: desc.trim() });
+    }
     onClose();
   };
 
@@ -129,7 +133,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm" onClick={e => e.stopPropagation()}>
         <div className="cm-head">
-          <span>Новый объект</span>
+          <span>{isEdit ? 'Редактировать' : 'Новый объект'}</span>
           <button className="cm-close" onClick={onClose}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -178,7 +182,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
 
         <div className="cm-foot">
           <button className="cm-btn ghost" onClick={onClose}>Отмена</button>
-          <button className="cm-btn primary" onClick={handleSave} disabled={!valid}>Добавить</button>
+          <button className="cm-btn primary" onClick={handleSave} disabled={!valid}>{isEdit ? 'Сохранить' : 'Добавить'}</button>
         </div>
       </div>
     </div>
@@ -344,6 +348,7 @@ function App() {
   const [view, setViewState] = useState({ start: -500, end: 2400 });
   const [legendHidden, setLegendHidden] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editItem,   setEditItem]   = useState(null);
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
   const [activeKinds, setActiveKinds] = useState(() => new Set(['subject', 'event', 'era']));
@@ -399,9 +404,13 @@ function App() {
   }, []);
 
   const handleCreate = useCallback((item) => {
-    // Новые объекты идут в 'main' по умолчанию
     const itemWithUniverse = window.setUniverseId(item, window.DEFAULT_UNIVERSE?.id || 'main');
     setItems(prev => [...prev, itemWithUniverse]);
+  }, []);
+
+  const handleUpdate = useCallback((updated) => {
+    setItems(prev => prev.map(it => it.id === updated.id ? updated : it));
+    setSelected(updated);
   }, []);
 
   const handleAddTag = useCallback((tag) => {
@@ -493,6 +502,15 @@ function App() {
           onAddTag={handleAddTag}
         />
       )}
+      {editItem && (
+        <CreateModal
+          onClose={() => setEditItem(null)}
+          onUpdate={handleUpdate}
+          initialItem={editItem}
+          allTags={allTags}
+          onAddTag={handleAddTag}
+        />
+      )}
 
       <div className="main" data-legend-hidden={legendHidden}>
         {!legendHidden && (
@@ -538,6 +556,7 @@ function App() {
           item={selected}
           onClose={() => setSelected(null)}
           onSelect={handleSelect}
+          onEdit={setEditItem}
           allItems={items}
         />
       </div>
