@@ -889,10 +889,13 @@ function formatYearShort(y) {
   return y < 0 ? `−${-y}` : `${y}`;
 }
 
-function colorForItem(item) {
-  // Всегда используем цвет области (domain) для окраски объектов
-  const dt = item.tags.find(id => TAG_MAP[id]?.facet === 'domain');
-  return TAG_MAP[dt]?.color || TAG_MAP[item.tags[0]]?.color || 'var(--text-2)';
+function colorForItem(item, activeTags) {
+  const domainTags = item.tags.filter(id => TAG_MAP[id]?.facet === 'domain');
+  if (activeTags) {
+    const active = domainTags.find(id => activeTags.has(id));
+    if (active) return TAG_MAP[active].color;
+  }
+  return TAG_MAP[domainTags[0]]?.color || TAG_MAP[item.tags[0]]?.color || 'var(--text-2)';
 }
 
 // Universe helpers

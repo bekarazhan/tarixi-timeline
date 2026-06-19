@@ -501,7 +501,7 @@ function Timeline({
     const x2 = scale.yearToX(e);
     const yBase = itemY(item) + clampedScrollY;
     // Всегда используем цвет области (domain) для заливки
-    const domainColor = window.colorForItem(item);
+    const domainColor = window.colorForItem(item, activeTags);
     
     const isSelected = selected && selected.id === item.id;
     const isDim = selected && selected.id !== item.id;
