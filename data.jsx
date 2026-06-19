@@ -65,6 +65,7 @@ const ALL_ITEMS = [
     tags: ['science', 'kz', 'person'],
     start: 872, end: 950, lifeSpan: '872 — 950',
     desc: 'Средневековый учёный-энциклопедист, философ, математик и музыкант. Уроженец Отрара (близ современного Шымкента). Получил прозвище «Второй учитель» — после Аристотеля.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Alpharabius_in_Liber_Chronicarum_1493_AD.png?width=800',
   },
   {
     id: 'balas-jur', kind: 'subject',
@@ -86,6 +87,7 @@ const ALL_ITEMS = [
     tags: ['culture', 'kz', 'person'],
     start: 1845, end: 1904, lifeSpan: '1845 — 1904',
     desc: 'Казахский поэт, композитор и просветитель. Основоположник казахской письменной литературы.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Abai_Kunanbaev.jpg?width=800',
   },
   {
     id: 'altynsarin', kind: 'subject',
@@ -144,6 +146,7 @@ const ALL_ITEMS = [
     tags: ['politics', 'war', 'person'],
     start: 1162, end: 1227, lifeSpan: '~1162 — 1227',
     desc: 'Основатель Монгольской империи. Объединил разрозненные племена и создал крупнейшую сухопутную империю в истории.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/YuanEmperorAlbumGenghisPortrait.jpg?width=800',
   },
   {
     id: 'timur', kind: 'subject',
@@ -158,6 +161,7 @@ const ALL_ITEMS = [
     tags: ['science', 'person'],
     start: 980, end: 1037, lifeSpan: '980 — 1037',
     desc: 'Персидский учёный из Бухары. «Канон врачебной науки» — главный медицинский учебник Европы и Азии на протяжении 600 лет.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Avicenna_Bust%2C_left_profile_%28cropped%29.jpg?width=800',
   },
   {
     id: 'leonardo', kind: 'subject',
@@ -165,6 +169,7 @@ const ALL_ITEMS = [
     tags: ['science', 'culture', 'person'],
     start: 1452, end: 1519, lifeSpan: '1452 — 1519',
     desc: 'Художник, учёный и изобретатель эпохи Возрождения. «Мона Лиза», «Тайная вечеря», чертежи летательных машин.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Francesco_Melzi_-_Portrait_of_Leonardo.png?width=800',
   },
   {
     id: 'newton', kind: 'subject',
@@ -179,6 +184,7 @@ const ALL_ITEMS = [
     tags: ['politics', 'war', 'person'],
     start: 1769, end: 1821, lifeSpan: '1769 — 1821',
     desc: 'Французский военачальник и император. Перекроил карту Европы, распространил идеи Французской революции.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Jacques-Louis_David_-_The_Emperor_Napoleon_in_His_Study_at_the_Tuileries_-_Google_Art_Project.jpg?width=800',
   },
   {
     id: 'marx', kind: 'subject',
@@ -290,6 +296,7 @@ const ALL_ITEMS = [
     tags: ['war', 'kz'],
     start: 751, end: 751,
     desc: 'Сражение Аббасидского халифата и Китая у реки Талас. Средняя Азия осталась исламской. Китайские пленники передали арабам секрет бумаги.',
+    photoUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Talas_River.jpg?width=800',
   },
   {
     id: 'mongol-invasion', kind: 'event',

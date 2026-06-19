@@ -277,6 +277,9 @@ function Timeline({
     setCursorState({ x, year });
     onCursorYearChange && onCursorYearChange(year);
 
+    // keep tooltip following cursor
+    setHover(h => h ? { ...h, x: e.clientX, y: e.clientY } : h);
+
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
@@ -764,12 +767,18 @@ function Timeline({
       {hover && hover.item !== selected && (
         <div
           className="tl-tooltip"
+          data-has-photo={!!hover.item.photoUrl}
           style={{
-            left: hover.x + 14,
-            top: hover.y + 14,
+            left: hover.x + (hover.x + 180 > window.innerWidth ? -194 : 14),
+            top: hover.y + (hover.y + (hover.item.photoUrl ? 240 : 100) > window.innerHeight ? -(hover.item.photoUrl ? 244 : 104) : 14),
             '--c': window.primaryTagOf(hover.item)?.color || 'var(--text-2)',
           }}
         >
+          {hover.item.photoUrl && (
+            <div className="tl-tooltip-photo">
+              <img src={hover.item.photoUrl} alt={hover.item.name} />
+            </div>
+          )}
           <div className="tl-tooltip-cat">{window.primaryTagOf(hover.item)?.name || ''}</div>
           <div className="tl-tooltip-title">{window.itemLabel(hover.item)}</div>
           <div className="tl-tooltip-yrs">
