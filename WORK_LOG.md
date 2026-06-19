@@ -6,6 +6,45 @@
 
 ---
 
+## [2026-06-19] Агент: Claude Code | Сессия: Multi-select вселенных, UX-терминология, фикс модалов
+
+### Что сделано
+- Завершён multi-select вселенных: `activeUniverses: Set<string>` вместо `currentUniverse: string`
+- Исправлено тело `UniverseManagerPanel` (старые `currentUniverse`/`onSwitch` → `activeUniverses`/`onToggle`)
+- `filterByUniverses()` — union-dedup по нескольким активным коллекциям
+- KZ/World убраны как хардкоженый географический split; стали полноценными встроенными коллекциями
+- Плоский layout в timeline (убраны `kzLanesTotal`/`worldLanesTotal`/регион-метки)
+- UX-терминология: Субъект→Участник, Эпохи→Периоды, Вселенная→Коллекция, "основная"→"встроенная", "Буфер настоящего"→"Маркер настоящего", Vibe-лейблы переведены на русский
+- Убрано "KZ/World" из результатов поиска — теперь показывается реальный тег места
+- Исправлен баг: `kind==='person'` → `kind==='subject' && subkind==='person'` (лейбл "Год рождения" не показывался)
+- Фикс клиппинга модалов: `ReactDOM.createPortal` на `document.body` — модалы рендерились внутри `.universe-dropdown` с `transform`, что ломало `position:fixed`
+- Исправлен preview-сервер: старый путь `/Users/bekas/Developer/Projects/TarixTimeline` → симлинк на актуальный `tarixi-timeline`
+
+### Что изменилось в файлах
+- `universe-manager.jsx` — `UniverseManagerPanel` body, портал для обоих модалов, "Коллекция" везде
+- `app.jsx` — multi-select state, `handleToggleUniverse`, `filterByUniverses`, UX-лейблы
+- `legend.jsx` — `KIND_META`: "Участники", "Периоды"
+- `data.jsx` — `filterByUniverse` для kz/world, `filterByUniverses`, built-in protected universes
+- `timeline.jsx` — плоский layout, убраны регион-зоны и метки
+- `detail.jsx` — `isSubject`/`isEra` вместо `isPerson`/`isPeriod`
+- `styles.css` — CSS universe-manager, multi-select стили (active border accent)
+- `index.html` — версии скриптов v29, CSS v26
+- `.claude/launch.json` + `serve.sh` — правильный рабочий каталог для preview
+
+### Коммиты
+- `773c82b` — multi-select universes, remove KZ/World split, fix legacy refs
+- `8fc9955` — ux: rename labels, unify terminology, fix search region display
+- `5759e9b` — fix: modal clipping inside dropdown transform context
+
+### Следующие шаги
+- Пустое состояние таймлайна (когда коллекция пуста или все фильтры сняты)
+- Новый объект создавать в активной коллекции, а не всегда в `main`
+- Форма создания: "Подтип субъекта" → более понятный лейбл или переработка
+- Поиск — заменить `эпоху` на `период` в placeholder
+- Проверить `findContemporaries` в Detail panel
+
+---
+
 ## [2026-06-18] Агент: Claude Code | Сессия: Баги в Legend и universe checkbox
 
 ### Что сделано

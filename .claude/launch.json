@@ -4,7 +4,7 @@
     {
       "name": "концепт-теги",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "7788"],
+      "runtimeArgs": ["-m", "http.server", "7788", "--directory", "/Users/bekas/Developer/tarixi-timeline"],
       "port": 7788
     }
   ]
