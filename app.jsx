@@ -75,7 +75,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     setSelTags(prev => [...prev, tag.id]);
   };
 
-  const valid = name.trim() && start && selTags.some(id => window.TAG_MAP[id]?.facet === 'place');
+  const valid = name.trim() && start;
 
   const handleSave = () => {
     if (!valid) return;
@@ -94,10 +94,7 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
     onClose();
   };
 
-  const byFacet = ['domain', 'place'].map(fid => ({
-    facet: window.FACETS[fid],
-    tags:  allTags.filter(t => t.facet === fid),
-  }));
+  const domainTags = allTags.filter(t => t.facet === 'domain');
 
   return (
     <div className="cm-overlay" onClick={onClose}>
@@ -153,26 +150,17 @@ function CreateModal({ onClose, onSave, allTags, onAddTag }) {
           </div>
 
           <div className="cm-field">
-            <label className="cm-label">
-              Теги <span className="cm-hint">— нужен хотя бы один тег места</span>
-            </label>
-            <div className="cm-tags-grid">
-              {byFacet.map(({ facet, tags }) => (
-                <div key={facet.id} className="cm-tag-facet">
-                  <div className="cm-tag-facet-name">{facet.name}</div>
-                  <div className="cm-tag-list">
-                    {tags.map(tag => (
-                      <button
-                        key={tag.id}
-                        className={`cm-tag ${selTags.includes(tag.id) ? 'on' : ''}`}
-                        style={{ '--tc': tag.color }}
-                        onClick={() => toggleTag(tag.id)}
-                      >{tag.name}</button>
-                    ))}
-                    <InlineTagCreator facetId={facet.id} onAdd={handleNewTag} />
-                  </div>
-                </div>
+            <label className="cm-label">Теги</label>
+            <div className="cm-tag-list">
+              {domainTags.map(tag => (
+                <button
+                  key={tag.id}
+                  className={`cm-tag ${selTags.includes(tag.id) ? 'on' : ''}`}
+                  style={{ '--tc': tag.color }}
+                  onClick={() => toggleTag(tag.id)}
+                >{tag.name}</button>
               ))}
+              <InlineTagCreator facetId="domain" onAdd={handleNewTag} />
             </div>
           </div>
 
@@ -309,7 +297,7 @@ function HeaderSearch({ items, onSelect }) {
                 <div>
                   <div>{window.itemLabel(r)}</div>
                   <div style={{ fontSize: 10.5, color: 'var(--text-3)' }}>
-                    {[pt?.name, r.tags.map(id => window.TAG_MAP[id]).find(t => t?.facet === 'place')?.name].filter(Boolean).join(' · ')}
+                    {pt?.name}
                   </div>
                 </div>
                 <span className="yr">{window.formatYearShort(s)}</span>
