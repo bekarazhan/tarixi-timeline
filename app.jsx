@@ -156,6 +156,36 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
       if (results.length === 0) {
         setWikiError('Ничего не найдено в Википедии.');
       } else {
+        const queryClean = wikiQuery.trim().toLowerCase();
+        const queryWords = queryClean.split(/\s+/).filter(Boolean);
+        
+        results.sort((a, b) => {
+          const aTitle = a.title.toLowerCase();
+          const bTitle = b.title.toLowerCase();
+          
+          // 1. Exact match priority
+          const aExact = aTitle === queryClean;
+          const bExact = bTitle === queryClean;
+          if (aExact && !bExact) return -1;
+          if (bExact && !aExact) return 1;
+          
+          // 2. Count of query words matched in title
+          const aMatches = queryWords.filter(w => aTitle.includes(w)).length;
+          const bMatches = queryWords.filter(w => bTitle.includes(w)).length;
+          
+          if (aMatches !== bMatches) {
+            return bMatches - aMatches; // More matches first
+          }
+          
+          // 3. Priority to titles starting with the query
+          const aStarts = aTitle.startsWith(queryClean);
+          const bStarts = bTitle.startsWith(queryClean);
+          if (aStarts && !bStarts) return -1;
+          if (bStarts && !aStarts) return 1;
+          
+          return 0; // Keep original ranking
+        });
+        
         setWikiResults(results);
       }
     } catch (err) {
