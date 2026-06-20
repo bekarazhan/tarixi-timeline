@@ -532,6 +532,7 @@ function Timeline({
 
     if (item.kind === 'era') {
       const w = Math.max(2, x2 - x1);
+      const stickyOffset = x1 < 0 && x2 > 40 ? Math.max(0, Math.min(-x1, w - 120)) : 0;
       return (
         <div key={item.id}
           className={`tl-item tl-era ${isSelected ? 'selected' : ''}`}
@@ -541,7 +542,12 @@ function Timeline({
           onMouseEnter={(ev) => setHover({ item, x: ev.clientX, y: ev.clientY })}
           onMouseLeave={() => setHover(null)}
         >
-          <span className="tl-era-label">{window.itemLabel(item)}</span>
+          <span
+            className="tl-era-label"
+            style={stickyOffset > 0 ? { transform: `translateX(${stickyOffset}px)`, display: 'inline-block' } : null}
+          >
+            {window.itemLabel(item)}
+          </span>
         </div>
       );
     }
@@ -549,6 +555,7 @@ function Timeline({
     if (item.kind === 'subject') {
       const w = Math.max(8, x2 - x1);
       const isAlive = item.lifeSpan && item.lifeSpan.includes('н.в.');
+      const stickyOffset = x1 < 0 && x2 > 40 ? Math.max(0, Math.min(-x1, w - 120)) : 0;
       return (
         <div key={item.id}
           className={`tl-item tl-subject ${isSelected ? 'selected' : ''} ${isAlive ? 'alive' : ''}`}
@@ -561,7 +568,14 @@ function Timeline({
           <div className="tl-subject-bar"></div>
           <div className="tl-subject-dot start"></div>
           {!isAlive && <div className="tl-subject-dot end"></div>}
-          {w > 40 && <div className="tl-subject-label">{item.name}</div>}
+          {w > 40 && (
+            <div
+              className="tl-subject-label"
+              style={stickyOffset > 0 ? { transform: `translate(${stickyOffset}px, -130%)` } : null}
+            >
+              {item.name}
+            </div>
+          )}
         </div>
       );
     }
