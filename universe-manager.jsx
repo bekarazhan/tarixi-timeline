@@ -743,37 +743,39 @@ function UniverseManagerPanel({
               </button>
               
               {/* Management buttons */}
-              {!isProtected && (
-                <div className="universe-manage-actions">
-                  <button
-                    className="universe-manage-btn export"
-                    onClick={e => { e.stopPropagation(); exportUniverseAsJSON(u, items); }}
-                    title="Экспорт JSON"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                  <button
-                    className="universe-manage-btn edit"
-                    onClick={e => handleEditClick(u, e)}
-                    title="Редактировать"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M10.5 1.5L12.5 3.5L4 12H2V10L10.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                  <button
-                    className="universe-manage-btn delete"
-                    onClick={e => handleDeleteClick(u, e)}
-                    title="Удалить"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 3.5L3.5 12.5h7L12 3.5M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-              )}
+              <div className="universe-manage-actions">
+                <button
+                  className="universe-manage-btn export"
+                  onClick={e => { e.stopPropagation(); exportUniverseAsJSON(u, items); }}
+                  title="Экспорт JSON"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 1v8M4 6l3 3 3-3M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {!isProtected && (
+                  <>
+                    <button
+                      className="universe-manage-btn edit"
+                      onClick={e => handleEditClick(u, e)}
+                      title="Редактировать"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M10.5 1.5L12.5 3.5L4 12H2V10L10.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                    <button
+                      className="universe-manage-btn delete"
+                      onClick={e => handleDeleteClick(u, e)}
+                      title="Удалить"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 3.5L3.5 12.5h7L12 3.5M5 3.5V2a1 1 0 011-1h2a1 1 0 011 1v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
