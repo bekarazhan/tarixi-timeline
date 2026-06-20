@@ -6,6 +6,44 @@
 
 ---
 
+## [2026-06-21] Агент: Claude Code | Сессия: Фото-тултипы, импорт/экспорт коллекций
+
+### Что сделано
+- **Фото-тултипы**: при наведении на объект с `photoUrl` тултип расширяется и показывает фото (120px). Следует за курсором, умный flip у края вьюпорта. Объекты без фото — старый компактный тултип
+- **Фикс URL изображений**: `upload.wikimedia.org` блокирует запросы с localhost → переведены все `photoUrl` на `commons.wikimedia.org/wiki/Special:FilePath/<file>?width=800`
+- **Тестовые фото**: abay, chinggis, avicenna, leonardo, napoleon, talas (+ al-farabi ранее)
+- **Импорт коллекций по JSON** (концепт для будущего community-хаба):
+  - `ImportCollectionModal` — вкладки «Вставить JSON» / «По URL», live-валидация, превью, кнопка «Пример схемы», подсказка про генерацию через ChatGPT/Claude
+  - `validateCollection()` — проверка обязательных полей (name, items[], id/kind/name/start)
+  - `handleImportCollection` в App: создаёт кастомную вселенную + добавляет items с префиксом id, активирует коллекцию
+- **Экспорт коллекции**: кнопка-иконка на кастомных коллекциях → скачивает `<id>.json` (items без служебного поля universe)
+
+### Что изменилось в файлах
+- `data.jsx` (v35) — photoUrl у 7 объектов
+- `timeline.jsx` (v36) — фото-блок в тултипе, тултип следует за курсором, edge-flip
+- `universe-manager.jsx` (v30) — ImportCollectionModal, SCHEMA_EXAMPLE, validateCollection, exportUniverseAsJSON, кнопки импорта/экспорта
+- `app.jsx` (v37) — handleImportCollection, проброс onImportCollection через UniverseSelector
+- `styles.css` (v35) — стили import-modal, фото-тултип, universe-action-row, кнопка export
+- `index.html` — версии
+
+### Коммиты
+- `ec0f024` — photo tooltips on hover + fix Wikimedia image URLs
+- `b1d4d3b` — clean up stale docs, prototypes, test files
+
+### Концепция импорта коллекций (для бэка)
+Цель: пользователь добавляет коллекцию (напр. Assassin's Creed) в разрезе реальной истории, не вбивая каждого персонажа вручную. Сейчас прото на localStorage. Дальше:
+- Community-хаб: статичная папка `community/` в репо (`index.json` + `<collection>.json`), фетч с GitHub CDN без бэка
+- Вкладка «Обзор» с галереей community-коллекций
+- Сабмит своей коллекции в комьюнити (через бэк)
+
+### Следующие шаги
+- Community-хаб (галерея готовых коллекций)
+- Пустое состояние таймлайна
+- Поиск: "эпоху" → "период" в placeholder
+- Проверить `findContemporaries` в Detail panel
+
+---
+
 ## [2026-06-19] Агент: Claude Code | Сессия: UX-фиксы, фото, коллекции, навигация
 
 ### Что сделано
