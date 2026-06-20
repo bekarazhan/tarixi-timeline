@@ -121,11 +121,27 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
   const handleSave = () => {
     if (!valid) return;
     const s = parseInt(start);
-    const e = kind === 'event' ? s : parseInt(end || start);
+    let e = s;
+    let ls = undefined;
+
+    if (kind === 'event') {
+      e = s;
+    } else if (kind === 'subject') {
+      if (end) {
+        e = parseInt(end);
+        ls = `${start} — ${end}`;
+      } else {
+        e = new Date().getFullYear();
+        ls = `${start} — н.в.`;
+      }
+    } else if (kind === 'era') {
+      e = end ? parseInt(end) : s;
+    }
+
     const common = {
       kind, name: name.trim(), tags: selTags, start: s, end: e,
       universe: universeId,
-      lifeSpan: kind === 'subject' ? `${start} — ${end || start}` : undefined,
+      lifeSpan: ls,
       desc: desc.trim(),
       photoUrl: photoUrl.trim() || undefined,
     };
