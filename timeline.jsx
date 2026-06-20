@@ -551,9 +551,10 @@ function Timeline({
 
     if (item.kind === 'subject') {
       const w = Math.max(8, x2 - x1);
+      const isAlive = item.lifeSpan && item.lifeSpan.includes('н.в.');
       return (
         <div key={item.id}
-          className={`tl-item tl-subject ${isSelected ? 'selected' : ''}`}
+          className={`tl-item tl-subject ${isSelected ? 'selected' : ''} ${isAlive ? 'alive' : ''}`}
           style={{ left: x1, top: yBase, width: w, height: ROW - 4, '--c': domainColor }}
           data-dim={isDim ? 'true' : 'false'}
           onClick={(ev) => { ev.stopPropagation(); onSelect(item); }}
@@ -562,7 +563,7 @@ function Timeline({
         >
           <div className="tl-subject-bar"></div>
           <div className="tl-subject-dot start"></div>
-          <div className="tl-subject-dot end"></div>
+          {!isAlive && <div className="tl-subject-dot end"></div>}
           {w > 40 && <div className="tl-subject-label">{item.name}</div>}
         </div>
       );

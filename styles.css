@@ -1223,6 +1223,14 @@ button { font-family: inherit; }
     color-mix(in oklab, var(--c) 100%, transparent) 100%);
   border-radius: 2px;
 }
+.tl-subject.alive .tl-subject-bar {
+  background: linear-gradient(90deg,
+    color-mix(in oklab, var(--c) 100%, transparent) 0%,
+    color-mix(in oklab, var(--c) 100%, transparent) 80%,
+    transparent 100%);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
 .tl-subject-dot {
   position: absolute;
   width: 8px; height: 8px; border-radius: 50%;
