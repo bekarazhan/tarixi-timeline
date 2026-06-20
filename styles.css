@@ -2342,7 +2342,7 @@ button { font-family: inherit; }
 .universe-action-row {
   display: flex;
   gap: 6px;
-  padding: 10px 12px;
+  padding: 6px 8px;
   border-top: 1px solid var(--line);
   background: var(--bg-3);
 }
@@ -2351,14 +2351,16 @@ button { font-family: inherit; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 5px;
+  height: 26px;
   background: var(--bg-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--text-1);
-  font: 500 12.5px var(--font-ui);
+  border-radius: 6px;
+  color: var(--text-2);
+  font: 500 11px var(--font-ui);
   text-align: center;
+  cursor: pointer;
+  transition: all 0.12s;
 }
 .universe-action-row .universe-create-btn:hover {
   background: var(--bg-1);
@@ -2366,7 +2368,13 @@ button { font-family: inherit; }
   color: var(--text-0);
 }
 .universe-action-row .universe-create-btn svg {
-  color: var(--text-2);
+  width: 11px;
+  height: 11px;
+  color: var(--text-3);
+  transition: color 0.12s;
+}
+.universe-action-row .universe-create-btn:hover svg {
+  color: var(--text-1);
 }
 
 /* Export button */
