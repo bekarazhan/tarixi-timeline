@@ -1664,7 +1664,7 @@ button { font-family: inherit; }
 .tl-zoom-handles {
   position: absolute;
   bottom: 4px;
-  left: 0;
+  left: 14px;
   height: 48px;
   pointer-events: none;
   z-index: 15;

@@ -407,10 +407,6 @@ function Timeline({
   };
 
   // ============ ZOOM HANDLE INTERACTIONS =================
-  // Use minimap coordinate system for consistent behavior with minimap window
-  const minimapYearToX = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * size.w;
-  const minimapXToYear = (x) => MINIMAP_MIN + (x / size.w) * (MINIMAP_MAX - MINIMAP_MIN);
-
   const onZoomHandleDown = (e, mode) => {
     e.stopPropagation();
     e.preventDefault();
@@ -429,7 +425,8 @@ function Timeline({
     const dx = e.clientX - startX;
     
     // Convert pixel movement to years using minimap scale for consistency
-    const dYears = (dx / size.w) * (MINIMAP_MAX - MINIMAP_MIN);
+    const activeW = Math.max(100, size.w - 28);
+    const dYears = (dx / activeW) * (MINIMAP_MAX - MINIMAP_MIN);
     const symmetric = e.ctrlKey || e.metaKey;
 
     let ns = startViewStart;
@@ -740,7 +737,7 @@ function Timeline({
       <ZoomHandles
         viewStart={viewStart}
         viewEnd={viewEnd}
-        width={size.w}
+        width={Math.max(100, size.w - 28)}
         onHandleDown={onZoomHandleDown}
         onHandleMove={onZoomHandleMove}
         onHandleUp={onZoomHandleUp}
@@ -1017,8 +1014,9 @@ function Minimap({ items, viewStart, viewEnd, setView, activeKinds, enablePresen
     return () => ro.disconnect();
   }, []);
 
-  const y2x = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * w;
-  const x2y = (x) => MINIMAP_MIN + (x / w) * (MINIMAP_MAX - MINIMAP_MIN);
+  const axisW = Math.max(100, w - 28);
+  const y2x = (y) => ((y - MINIMAP_MIN) / (MINIMAP_MAX - MINIMAP_MIN)) * axisW;
+  const x2y = (x) => MINIMAP_MIN + (x / axisW) * (MINIMAP_MAX - MINIMAP_MIN);
 
   const eras = window.EPOCH_PRESETS.filter(ep => ep.start >= MINIMAP_MIN || ep.end >= MINIMAP_MIN);
 
@@ -1028,7 +1026,7 @@ function Minimap({ items, viewStart, viewEnd, setView, activeKinds, enablePresen
   const dragRef = useRef(null);
   const onMouseDown = (e) => {
     const rect = wrapRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const x = e.clientX - rect.left - 14;
     const year = x2y(x);
     const span = viewEnd - viewStart;
     // jump center
@@ -1043,7 +1041,7 @@ function Minimap({ items, viewStart, viewEnd, setView, activeKinds, enablePresen
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.lastX;
     dragRef.current.lastX = e.clientX;
-    const dYears = (dx / w) * (MINIMAP_MAX - MINIMAP_MIN);
+    const dYears = (dx / axisW) * (MINIMAP_MAX - MINIMAP_MIN);
     let ns = viewStart + dYears, ne = viewEnd + dYears;
     if (ns < MINIMAP_MIN) { ne += MINIMAP_MIN - ns; ns = MINIMAP_MIN; }
     if (ne > MINIMAP_MAX) { ns -= ne - MINIMAP_MAX; ne = MINIMAP_MAX; }
