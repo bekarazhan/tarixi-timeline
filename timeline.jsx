@@ -288,25 +288,15 @@ function Timeline({
     let ns = dragRef.current.startViewStart + dYears;
     let ne = dragRef.current.startViewEnd + dYears;
     
-    // UX improvement: Add breathing room when panning in modern era
-    if (ne > 1900) {
-      const buffer = Math.max(10, (ne - ns) * 0.08);
-      ne = Math.min(GLOBAL_MAX, ne + buffer);
+    // clamp to minimap bounds for consistency preserving the span
+    if (ns < MINIMAP_MIN) {
+      ns = MINIMAP_MIN;
+      ne = ns + span;
     }
-    
-    // UX: Present year buffer zone - prevent current year from hitting edge
-    if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
-      const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
-      if (targetEnd < GLOBAL_MAX) {
-        const neededBuffer = targetEnd - ne;
-        ns -= neededBuffer * 0.7; // Soft constraint during drag
-        ne = targetEnd;
-      }
+    if (ne > MINIMAP_MAX) {
+      ne = MINIMAP_MAX;
+      ns = ne - span;
     }
-    
-    // clamp to minimap bounds for consistency
-    if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
-    if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
     setView(ns, ne);
     // Fix: Mouse drag down should scroll down (increase scrollY), drag up should scroll up (decrease scrollY)
     setScrollY(dragRef.current.startScrollY + dy);
@@ -338,25 +328,15 @@ function Timeline({
       const dYears = (deltaX / size.w) * span;
       let ns = viewStart + dYears, ne = viewEnd + dYears;
       
-      // UX improvement: Add breathing room when panning in modern era
-      if (ne > 1900) {
-        const buffer = Math.max(10, (ne - ns) * 0.08);
-        ne = Math.min(GLOBAL_MAX, ne + buffer);
+      // clamp to minimap bounds preserving the span
+      if (ns < MINIMAP_MIN) {
+        ns = MINIMAP_MIN;
+        ne = ns + span;
       }
-      
-      // UX: Present year buffer zone - prevent current year from hitting edge
-      if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
-        const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
-        if (targetEnd < GLOBAL_MAX) {
-          const neededBuffer = targetEnd - ne;
-          ns -= neededBuffer * 0.7; // Soft constraint during drag
-          ne = targetEnd;
-        }
+      if (ne > MINIMAP_MAX) {
+        ne = MINIMAP_MAX;
+        ns = ne - span;
       }
-      
-      // clamp to minimap bounds
-      if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
-      if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
       setView(ns, ne);
       return;
     }
@@ -378,26 +358,15 @@ function Timeline({
     let ns = yearAt - newSpan * ratio;
     let ne = yearAt + newSpan * (1 - ratio);
     
-    // UX improvement: Add breathing room when zoomed into modern era
-    // Prevents current year from being stuck at screen edge
-    if (ne > 1900) {
-      const buffer = Math.max(15, (ne - ns) * 0.12); // 12% buffer for modern era
-      ne = Math.min(GLOBAL_MAX, ne + buffer);
+    // clamp to minimap bounds preserving the span
+    if (ns < MINIMAP_MIN) {
+      ns = MINIMAP_MIN;
+      ne = ns + newSpan;
     }
-    
-    // UX: Present year buffer zone - maintain visual breathing room after current year
-    if (enablePresentBuffer && ne > CURRENT_YEAR && ne < CURRENT_YEAR + PRESENT_BUFFER_FIXED) {
-      const targetEnd = CURRENT_YEAR + PRESENT_BUFFER_FIXED;
-      if (targetEnd < GLOBAL_MAX) {
-        const neededBuffer = targetEnd - ne;
-        ns -= neededBuffer;
-        ne = targetEnd;
-      }
+    if (ne > MINIMAP_MAX) {
+      ne = MINIMAP_MAX;
+      ns = ne - newSpan;
     }
-    
-    // clamp to minimap bounds
-    if (ns < MINIMAP_MIN) { ne += (MINIMAP_MIN - ns); ns = MINIMAP_MIN; }
-    if (ne > MINIMAP_MAX) { ns -= (ne - MINIMAP_MAX); ne = MINIMAP_MAX; }
     setView(ns, ne);
   };
 
