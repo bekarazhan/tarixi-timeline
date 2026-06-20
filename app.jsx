@@ -110,6 +110,11 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
   const [desc,    setDesc]    = useState(initialItem?.desc     || '');
   const [photoUrl, setPhotoUrl] = useState(initialItem?.photoUrl || '');
 
+  const [wikiQuery, setWikiQuery] = useState('');
+  const [wikiResults, setWikiResults] = useState([]);
+  const [wikiLoading, setWikiLoading] = useState(false);
+  const [wikiError, setWikiError] = useState('');
+
   const isPerson = kind === 'subject' && selTags.includes('person');
   const valid = name.trim() && start;
 
@@ -137,6 +142,129 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
     setSelTags(prev => [...prev, tag.id]);
   };
 
+  const handleWikiSearch = async () => {
+    if (!wikiQuery.trim()) return;
+    setWikiLoading(true);
+    setWikiError('');
+    setWikiResults([]);
+    try {
+      const searchUrl = `https://ru.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(wikiQuery.trim())}&format=json&origin=*`;
+      const res = await fetch(searchUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const results = data.query?.search || [];
+      if (results.length === 0) {
+        setWikiError('Ничего не найдено в Википедии.');
+      } else {
+        setWikiResults(results);
+      }
+    } catch (err) {
+      console.error('[WikiSearch] Error:', err);
+      setWikiError('Ошибка поиска: ' + err.message);
+    } finally {
+      setWikiLoading(false);
+    }
+  };
+
+  const handleSelectWikiResult = async (resItem) => {
+    setWikiLoading(true);
+    setWikiError('');
+    setWikiResults([]);
+    setWikiQuery('');
+    try {
+      const pageUrl = `https://ru.wikipedia.org/w/api.php?action=query&prop=pageprops|extracts|pageimages&ppprop=wikibase_item&exintro&explaintext&piprop=thumbnail|original&titles=${encodeURIComponent(resItem.title)}&format=json&origin=*`;
+      const wRes = await fetch(pageUrl);
+      if (!wRes.ok) throw new Error(`HTTP ${wRes.status}`);
+      const wData = await wRes.json();
+      
+      const pages = wData.query?.pages || {};
+      const pageId = Object.keys(pages)[0];
+      if (pageId === '-1') throw new Error('Страница не найдена в Википедии.');
+      
+      const page = pages[pageId];
+      const qid = page.pageprops?.wikibase_item;
+      const extract = page.extract || '';
+      const photo = page.original?.source || page.thumbnail?.source || '';
+      
+      setName(page.title);
+      setDesc(extract.length > 500 ? extract.slice(0, 500) + '...' : extract);
+      if (photo) setPhotoUrl(photo);
+
+      let inferredKind = 'event';
+      let startYear = '';
+      let endYear = '';
+
+      if (qid) {
+        const wikidataUrl = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&languages=ru&format=json&origin=*`;
+        const wdRes = await fetch(wikidataUrl);
+        if (!wdRes.ok) throw new Error(`HTTP Wikidata ${wdRes.status}`);
+        const wdData = await wdRes.json();
+        
+        const entity = wdData.entities?.[qid] || {};
+        const claims = entity.claims || {};
+        
+        const parseWdYear = (claim) => {
+          if (!claim || !claim[0]) return null;
+          const val = claim[0].mainsnak?.datavalue?.value;
+          if (!val || !val.time) return null;
+          const match = val.time.match(/^([+-]?\d+)/);
+          return match ? parseInt(match[1], 10) : null;
+        };
+
+        const bYear = parseWdYear(claims.P569);
+        const dYear = parseWdYear(claims.P570);
+
+        if (bYear !== null) {
+          inferredKind = 'subject';
+          startYear = String(bYear);
+          if (dYear !== null) {
+            endYear = String(dYear);
+          }
+          
+          const hasPersonTag = (allTags || []).some(t => t.id === 'person');
+          if (hasPersonTag) {
+            setSelTags(prev => prev.includes('person') ? prev : [...prev, 'person']);
+          }
+        } else {
+          const pointClaim = claims.P585;
+          const startClaim = claims.P580;
+          const endClaim = claims.P582;
+
+          const pYear = parseWdYear(pointClaim);
+          const sYear = parseWdYear(startClaim);
+          const eYear = parseWdYear(endClaim);
+
+          if (pYear !== null) {
+            inferredKind = 'event';
+            startYear = String(pYear);
+          } else if (sYear !== null) {
+            startYear = String(sYear);
+            if (eYear !== null) {
+              endYear = String(eYear);
+              if (eYear - sYear > 15) {
+                inferredKind = 'era';
+              } else {
+                inferredKind = 'event';
+              }
+            } else {
+              inferredKind = 'event';
+            }
+          }
+        }
+      }
+
+      setKind(inferredKind);
+      if (startYear) setStart(startYear);
+      if (endYear) setEnd(endYear);
+
+    } catch (err) {
+      console.error('[WikiAutofill] Error:', err);
+      setWikiError('Не удалось импортировать данные: ' + err.message);
+    } finally {
+      setWikiLoading(false);
+    }
+  };
+
   return (
     <div className="cm-overlay" onClick={onClose}>
       <div className="cm" onClick={e => e.stopPropagation()}>
@@ -150,11 +278,55 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
         </div>
 
         <div className="cm-body">
+          {!isEdit && (
+            <div className="cm-field">
+              <label className="cm-label">Умный импорт из Википедии</label>
+              <div className="import-url-row">
+                <input
+                  className="cm-input"
+                  value={wikiQuery}
+                  onChange={e => { setWikiQuery(e.target.value); setWikiResults([]); setWikiError(''); }}
+                  placeholder="Имя личности (напр. Абылай хан) или событие..."
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleWikiSearch())}
+                />
+                <button
+                  type="button"
+                  className="cm-btn ghost"
+                  onClick={handleWikiSearch}
+                  disabled={wikiLoading}
+                  style={{ flexShrink: 0 }}
+                >
+                  {wikiLoading ? 'Поиск...' : 'Найти'}
+                </button>
+              </div>
+
+              {wikiResults.length > 0 && (
+                <div className="wiki-search-results">
+                  {wikiResults.map(res => (
+                    <button
+                      key={res.pageid}
+                      type="button"
+                      className="wiki-search-result-item"
+                      onClick={() => handleSelectWikiResult(res)}
+                    >
+                      <span className="wiki-result-title">{res.title}</span>
+                      <span
+                        className="wiki-result-snippet"
+                        dangerouslySetInnerHTML={{ __html: res.snippet }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {wikiError && <div className="import-error">{wikiError}</div>}
+            </div>
+          )}
+
           <div className="cm-field">
             <label className="cm-label">Тип объекта</label>
             <div className="cm-seg">
               {[['event','Событие'],['subject','Участник'],['era','Период']].map(([v,l]) => (
-                <button key={v} className={kind===v ? 'active' : ''} onClick={() => setKind(v)}>{l}</button>
+                <button key={v} type="button" className={kind===v ? 'active' : ''} onClick={() => setKind(v)}>{l}</button>
               ))}
             </div>
           </div>
