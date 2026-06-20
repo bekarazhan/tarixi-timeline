@@ -856,13 +856,12 @@ function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, on
   
   // Calculate handle positions using minimap scale - same as minimap window  
   // Clamp to minimap bounds for perfect synchronization with minimap window
-  const handleLeft = Math.max(0, Math.min(width - HANDLE_WIDTH, yearToX(Math.max(MINIMAP_MIN, viewStart))));
-  const handleRight = Math.max(HANDLE_WIDTH, Math.min(width, yearToX(Math.min(MINIMAP_MAX, viewEnd))));
+  const handleLeft = Math.max(0, Math.min(width, yearToX(Math.max(MINIMAP_MIN, viewStart))));
+  const handleRight = Math.max(0, Math.min(width, yearToX(Math.min(MINIMAP_MAX, viewEnd))));
   
   // Center area between handles - this is our visible window (same as minimap window)
-  const centerLeft = Math.max(0, handleLeft + HANDLE_WIDTH - 4);
-  const centerRight = Math.min(width, handleRight - HANDLE_WIDTH + 4);
-  const centerWidth = Math.max(0, centerRight - centerLeft);
+  const centerLeft = handleLeft + HANDLE_WIDTH / 2;
+  const centerWidth = Math.max(0, handleRight - handleLeft - HANDLE_WIDTH);
 
   const formatYear = (year) => {
     return window.formatYearShort(Math.round(year));
@@ -880,15 +879,15 @@ function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, on
       <div
         className="tl-zoom-range-indicator"
         style={{
-          left: handleLeft + HANDLE_WIDTH,
-          width: Math.max(0, handleRight - handleLeft - 2 * HANDLE_WIDTH)
+          left: handleLeft,
+          width: Math.max(0, handleRight - handleLeft)
         }}
       />
       
       {/* Left handle - positioned where view starts on timeline */}
       <div
         className={`tl-zoom-handle tl-zoom-handle-left ${hoveredHandle === 'left' || isDragging ? 'hovered' : ''} ${symmetricMode ? 'symmetric' : ''}`}
-        style={{ left: handleLeft }}
+        style={{ left: handleLeft - HANDLE_WIDTH / 2 }}
         onPointerDown={(e) => handlePointerDown(e, 'left')}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -908,7 +907,7 @@ function ZoomHandles({ viewStart, viewEnd, width, onHandleDown, onHandleMove, on
       {/* Right handle */}
       <div
         className={`tl-zoom-handle tl-zoom-handle-right ${hoveredHandle === 'right' || isDragging ? 'hovered' : ''} ${symmetricMode ? 'symmetric' : ''}`}
-        style={{ left: handleRight - HANDLE_WIDTH }}
+        style={{ left: handleRight - HANDLE_WIDTH / 2 }}
         onPointerDown={(e) => handlePointerDown(e, 'right')}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
