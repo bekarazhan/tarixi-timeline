@@ -598,6 +598,7 @@ function App() {
   const [legendHidden, setLegendHidden] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [editItem,   setEditItem]   = useState(null);
+  const [chatItem,   setChatItem]   = useState(null);
   const [items, setItems] = useState(() => window.ALL_ITEMS);
   const [customTags, setCustomTags] = useState([]);
   const [activeKinds, setActiveKinds] = useState(() => new Set(['subject', 'event', 'era']));
@@ -791,6 +792,9 @@ function App() {
           defaultUniverseId={defaultUniverseId}
         />
       )}
+      {chatItem && window.ChatPanel && (
+        <window.ChatPanel item={chatItem} onClose={() => setChatItem(null)} />
+      )}
 
       <div className="main" data-legend-hidden={legendHidden}>
         {!legendHidden && (
@@ -837,6 +841,7 @@ function App() {
           onClose={() => setSelected(null)}
           onSelect={handleSelect}
           onEdit={setEditItem}
+          onChat={setChatItem}
           allItems={items}
         />
       </div>

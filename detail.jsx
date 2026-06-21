@@ -1,6 +1,6 @@
 /* TarixiTimeline — Detail panel */
 
-function DetailPanel({ item, onClose, onSelect, onEdit, allItems }) {
+function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
   // храним последний показанный item — чтобы при закрытии анимация ушла плавно
   const [shown, setShown] = React.useState(item);
   React.useEffect(() => {
@@ -73,8 +73,16 @@ function DetailPanel({ item, onClose, onSelect, onEdit, allItems }) {
           <div className="detail-section-title">Описание</div>
           <p className="detail-desc">{cur.desc}</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+            {onChat && isSubject && (
+              <button className="detail-cta" style={{ background: color }} onClick={() => onChat(cur)}>
+                Поговорить
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 3.5A1.5 1.5 0 013.5 2h7A1.5 1.5 0 0112 3.5v5A1.5 1.5 0 0110.5 10H6l-3 2.5V10H3.5A1.5 1.5 0 012 8.5v-5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
             {onEdit && (
-              <button className="detail-cta" style={{ background: color }} onClick={() => onEdit(cur)}>
+              <button className="detail-cta ghost" onClick={() => onEdit(cur)}>
                 Редактировать
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M8.5 1.5l2 2-6 6H2.5v-2l6-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
