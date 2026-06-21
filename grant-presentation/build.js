@@ -126,7 +126,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
       { text: "Грант сомасы:  ", options: { bold: true, color: C.gold } },
       { text: "3 000 000 теңге", options: { color: C.cream } },
     ], { x: 0.9, y: 5.95, w: 11, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 15 });
-    s.addText("Bekassyl Karazhan · Бас бағдарламашы, техника ғылымдарының магистрі", {
+    s.addText("Bekassyl Karazhan · ҚР ПІБ МТҚБ Инженерлік орталығының бас бағдарламашысы, техника ғылымдарының магистрі", {
       x: 0.9, y: 6.5, w: 11, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 13, italic: true, color: "AFC3CE",
     });
   }
@@ -357,9 +357,9 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     title(s, "Сенімді инженерлік негіз");
 
     const tech = [
-      { icon: ic.code, t: "C# · .NET 8+", d: "Clean Architecture және SOLID принциптері. MVP үшін домендік бөлінісі бар модульді монолит." },
-      { icon: ic.server, t: "PostgreSQL", d: "Тарихи деректермен жұмыстың домендік логикасы реляциялық ДҚБЖ-мен инкапсуляцияланған." },
-      { icon: ic.robot, t: "LLM интеграциясы", d: "OpenAI / Anthropic API жеке инфрақұрылым қабатында - vendor lock-in минималды, миграция оңай." },
+      { icon: ic.code, t: "Заманауи веб-технологиялар", d: "Clean Architecture және SOLID принциптері. MVP үшін домендік бөлінісі бар модульді монолит." },
+      { icon: ic.server, t: "Сенімді ДҚБЖ", d: "Тарихи деректермен жұмыстың домендік логикасы реляциялық дерекқормен инкапсуляцияланған." },
+      { icon: ic.robot, t: "LLM интеграциясы", d: "OpenAI / Anthropic / Groq API жеке инфрақұрылым қабатында - vendor lock-in минималды, миграция оңай." },
       { icon: ic.rocket, t: "Масштабталу", d: "REST API; жүктеме өскенде микросервистік архитектураға дейін кеңейтуге есептелген." },
     ];
     let tx = 0.7, ty = 1.95;
@@ -378,7 +378,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     s.addImage({ data: await icon(FA.FaUserTie, "#" + C.navy), x: 1.21, y: 6.01, w: 0.38, h: 0.38 });
     s.addText([
       { text: "Автор:  ", options: { bold: true, color: C.gold } },
-      { text: "Бас бағдарламашы, техника ғылымдарының магистрі, мемлекеттік инжинирингтік орталық қызметкері. .NET платформасында ПО әзірлеудің толық циклін басқару тәжірибесі.", options: { color: C.cream } },
+      { text: "ҚР ПІБ МТҚБ Инженерлік орталығының бас бағдарламашысы, техника ғылымдарының магистрі. ПО әзірлеудің толық циклін басқару тәжірибесі.", options: { color: C.cream } },
     ], { x: 1.95, y: 5.7, w: 10.4, h: 1.0, margin: 0, fontFace: FONT_B, fontSize: 13.5, valign: "middle", lineSpacingMultiple: 1.1 });
     pageNum(s, 8);
   }
@@ -455,10 +455,10 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
 
     // 4 кезең timeline
     const phases = [
-      { q: "1-3 ай", t: "Іргетас", d: "Архитектура, ДҚ,\nтаймлайн ядросы" },
-      { q: "4-6 ай", t: "ИИ-чат", d: "LLM интеграциясы,\nагенттер контексі" },
-      { q: "7-9 ай", t: "MVP", d: "UI/UX, мобильді\nбейімдеу, тестілеу" },
-      { q: "10-12 ай", t: "Іске қосу", d: "Маркетинг,\nалғашқы аудитория" },
+      { q: "1-кезең", t: "Іргетас", d: "Архитектура, ДҚ,\nтаймлайн ядросы" },
+      { q: "2-кезең", t: "ИИ-чат", d: "LLM интеграциясы,\nагенттер контексі" },
+      { q: "3-кезең", t: "MVP", d: "UI/UX, мобильді\nбейімдеу, тестілеу" },
+      { q: "4-кезең", t: "Іске қосу", d: "Маркетинг,\nалғашқы аудитория" },
     ];
     const tlX = 1.8, tlW = 9.7, segs = phases.length - 1;
     timelineMotif(s, tlX, 2.5, tlW, phases.length, C.gold);
