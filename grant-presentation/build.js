@@ -18,7 +18,7 @@ const C = {
   line:   "D9D0BE",  // ашық сызық
 };
 
-const FONT_H = "Georgia";
+const FONT_H = "Times New Roman";
 const FONT_B = "Calibri";
 
 // ---------- иконкалар ----------
@@ -267,11 +267,11 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     });
 
     s.addText("ДЕТАЛЬДІ ПАНЕЛЬ", { x: 8.5, y: 1.95, w: 4.2, h: 0.35, margin: 0, fontFace: FONT_B, fontSize: 12, bold: true, color: C.gold, charSpacing: 3 });
-    const dW = 3.05, dH = dW * 1.5, dX = 8.55, dY = 2.4; 
+    const dW = 3.05, dH = dW * 1050 / 850, dX = 8.55, dY = 2.4; // нақты пропорция (850x1050)
     s.addShape(pres.shapes.RECTANGLE, { x: dX - 0.04, y: dY - 0.04, w: dW + 0.08, h: dH + 0.08, fill: { color: C.navy }, shadow: shadow() });
     s.addImage({ path: __dirname + "/crop-detail.png", x: dX, y: dY, w: dW, h: dH });
-    s.addText("Детальді ақпаратта ИИ-чатты ашатын арнайы батырма орналасқан.", {
-      x: 8.55, y: dY + dH + 0.15, w: 4.05, h: 0.7, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.ink, lineSpacingMultiple: 1.15,
+    s.addText("Объектіні таңдағанда фото, сипаттама және ИИ-чатты ашатын «Поговорить» батырмасы көрінеді.", {
+      x: 8.5, y: dY + dH + 0.12, w: 4.15, h: 0.7, margin: 0, fontFace: FONT_B, fontSize: 12, color: C.ink, lineSpacingMultiple: 1.15,
     });
     pageNum(s, 5);
   }
@@ -285,20 +285,32 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     kicker(s, "Интерфейс · Инновация");
     title(s, "Тарихи тұлғалармен ИИ-сұхбат");
 
-    const cvX = 0.7, cvY = 1.95, cvW = 6.8, cvH = cvW * 1800 / 3200;
-    s.addShape(pres.shapes.RECTANGLE, { x: cvX - 0.04, y: cvY - 0.04, w: cvW + 0.08, h: cvH + 0.08, fill: { color: C.navy }, shadow: shadow() });
-    s.addImage({ path: __dirname + "/screen-chat-full.png", x: cvX, y: cvY, w: cvW, h: cvH });
-
-    s.addText("Толық экран режиміндегі чат интерфейсі", {
-      x: cvX, y: cvY + cvH + 0.1, w: cvW, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.muted, italic: true,
+    // Сол жақ — нақты диалог (модал, портрет 960x1280)
+    const mH = 4.5, mW = mH * 960 / 1280, mX = 0.7, mY = 1.9;
+    s.addShape(pres.shapes.RECTANGLE, { x: mX - 0.04, y: mY - 0.04, w: mW + 0.08, h: mH + 0.08, fill: { color: C.navy }, shadow: shadow() });
+    s.addImage({ path: __dirname + "/chat-modal.png", x: mX, y: mY, w: mW, h: mH });
+    s.addText("Нақты экран — Әл-Фарабимен қазақша диалог", {
+      x: mX, y: mY + mH + 0.12, w: mW + 1.2, h: 0.35, margin: 0, fontFace: FONT_B, fontSize: 12, italic: true, color: C.muted,
     });
 
-    const cx = 8.0, cy = 1.95, cw = 4.5, ch = cw * 1.0; 
-    s.addShape(pres.shapes.RECTANGLE, { x: cx - 0.04, y: cy - 0.04, w: cw + 0.08, h: ch + 0.08, fill: { color: C.navy }, shadow: shadow() });
-    s.addImage({ path: __dirname + "/chat-modal.png", x: cx, y: cy, w: cw, h: ch });
+    // Оң жақ — сипаттама + ерекшеліктер
+    const rx = mX + mW + 0.7, rw = W - rx - 0.73;
+    s.addText("Эмпатиялық терең ену — платформаның басты ерекшелігі. Оқушы тарихи тұлғамен нақты адаммен сөйлескендей сұхбаттасады, бұл білімді есте сақтауды күшейтеді.", {
+      x: rx, y: 2.0, w: rw, h: 1.3, margin: 0, fontFace: FONT_B, fontSize: 16, color: C.ink, lineSpacingMultiple: 1.3,
+    });
 
-    s.addText("Эмпатиялық терең ену - платформаның басты ерекшелігі. Оқушылар тұлғамен нақты адаммен сөйлескендей әңгімелеседі.", {
-      x: cx, y: cy + ch + 0.3, w: cw, h: 1.2, margin: 0, fontFace: FONT_B, fontSize: 15, color: C.ink, lineSpacingMultiple: 1.15,
+    const feats = [
+      { icon: ic.robot, t: "Дәуірге дәйекті ИИ-агенттер", d: "Әр тұлғаның мінезі, білімі мен дәуір контексі сақталады." },
+      { icon: ic.comments, t: "Қазақ және орыс тілінде", d: "Оқушының тіліне қарай табиғи түрде жауап береді." },
+      { icon: ic.brain, t: "Белсенді коммуникация", d: "Пассивті оқуға қарағанда ақпарат әлдеқайда жақсы бекиді." },
+    ];
+    let fy = 3.55;
+    feats.forEach((f) => {
+      s.addShape(pres.shapes.OVAL, { x: rx, y: fy, w: 0.7, h: 0.7, fill: { color: C.navy } });
+      s.addImage({ data: f.icon, x: rx + 0.16, y: fy + 0.16, w: 0.38, h: 0.38 });
+      s.addText(f.t, { x: rx + 0.95, y: fy - 0.02, w: rw - 0.95, h: 0.4, margin: 0, fontFace: FONT_H, fontSize: 16, bold: true, color: C.navy });
+      s.addText(f.d, { x: rx + 0.95, y: fy + 0.4, w: rw - 0.95, h: 0.55, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.ink, lineSpacingMultiple: 1.1 });
+      fy += 1.05;
     });
 
     pageNum(s, 6);
@@ -430,8 +442,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
 
     let by = 1.95;
     budget.forEach((b, i) => {
-      const colors = ["0B3D54", "1C7CA5", "E5B23C", "C9962B", "5E8CA0", "8FB3C4", "A8742E"];
-      s.addShape(pres.shapes.RECTANGLE, { x: 6.45, y: by, w: 0.18, h: 0.5, fill: { color: colors[i] } });
+      s.addShape(pres.shapes.RECTANGLE, { x: 6.45, y: by, w: 0.18, h: 0.5, fill: { color: palette[i] } });
       s.addText(b[0], { x: 6.78, y: by, w: 4.4, h: 0.5, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.ink, valign: "middle" });
       s.addText(b[1].toLocaleString("ru-RU") + " ₸", { x: 11.2, y: by, w: 1.5, h: 0.5, margin: 0, fontFace: FONT_B, fontSize: 13, bold: true, color: C.navy, align: "right", valign: "middle" });
       by += 0.62;
@@ -484,6 +495,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     s.addText("bekasyl.kar@gmail.com", { x: 9.05, y: 6.3, w: 3.3, h: 0.35, margin: 0, fontFace: FONT_B, fontSize: 12, bold: true, color: C.navy, valign: "middle" });
     s.addImage({ data: ic.gh, x: 8.7, y: 6.74, w: 0.28, h: 0.28 });
     s.addText("github.com/bekarazhan/tarixi-timeline", { x: 9.05, y: 6.7, w: 3.5, h: 0.35, margin: 0, fontFace: FONT_B, fontSize: 11, color: C.navy, valign: "middle" });
+    pageNum(s, 10, true);
   }
 
   await pres.writeFile({ fileName: "/Users/bekas/Developer/tarixi-timeline/grant-presentation/Tarixi-Timeline_Tauelsizdik_urpaqtary.pptx" });
