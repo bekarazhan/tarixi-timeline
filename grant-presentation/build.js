@@ -71,8 +71,8 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
 
   function kicker(slide, text, color = C.gold) {
     slide.addText(text.toUpperCase(), {
-      x: 0.7, y: 0.5, w: 8, h: 0.35, margin: 0,
-      fontFace: FONT_B, fontSize: 12, bold: true, color, charSpacing: 3,
+      x: 0.7, y: 0.5, w: 11.5, h: 0.35, margin: 0,
+      fontFace: FONT_B, fontSize: 12, bold: true, color, charSpacing: 2,
     });
   }
 
@@ -127,7 +127,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
       { text: "3 000 000 теңге", options: { color: C.cream } },
     ], { x: 0.9, y: 5.95, w: 11, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 15 });
     s.addText("Bekassyl Karazhan · ҚР ПІБ МТҚБ Инженерлік орталығының бас бағдарламашысы, техника ғылымдарының магистрі", {
-      x: 0.9, y: 6.5, w: 11, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 13, italic: true, color: "AFC3CE",
+      x: 0.9, y: 6.5, w: 12, h: 0.4, margin: 0, fontFace: FONT_B, fontSize: 12, italic: true, color: "AFC3CE",
     });
   }
 
@@ -218,8 +218,8 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
       s.addText(st.n, { x: sx + 0.3, y: 2.3, w: 1.6, h: 0.8, margin: 0, fontFace: FONT_H, fontSize: 40, bold: true, color: "D6BE8C" });
       s.addShape(pres.shapes.OVAL, { x: sx + 2.7, y: 2.45, w: 0.82, h: 0.82, fill: { color: C.navy } });
       s.addImage({ data: st.icon, x: sx + 2.89, y: 2.64, w: 0.44, h: 0.44 });
-      s.addText(st.t, { x: sx + 0.3, y: 3.35, w: 3.3, h: 0.6, margin: 0, fontFace: FONT_H, fontSize: 18, bold: true, color: C.navy });
-      s.addText(st.d, { x: sx + 0.3, y: 4.0, w: 3.3, h: 1.6, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.ink, lineSpacingMultiple: 1.2 });
+      s.addText(st.t, { x: sx + 0.3, y: 3.35, w: 3.45, h: 0.6, margin: 0, fontFace: FONT_H, fontSize: 16.5, bold: true, color: C.navy });
+      s.addText(st.d, { x: sx + 0.3, y: 4.0, w: 3.45, h: 1.6, margin: 0, fontFace: FONT_B, fontSize: 12.5, color: C.ink, lineSpacingMultiple: 1.2 });
       sx += 4.07;
     });
 
@@ -323,8 +323,8 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
       s.addShape(pres.shapes.RECTANGLE, { x: ax, y: 1.9, w: 3.85, h: 2.3, fill: { color: C.white }, shadow: shadow() });
       s.addShape(pres.shapes.OVAL, { x: ax + 0.35, y: 2.15, w: 0.85, h: 0.85, fill: { color: C.navy } });
       s.addImage({ data: a.icon, x: ax + 0.55, y: 2.35, w: 0.45, h: 0.45 });
-      s.addText(a.big, { x: ax + 0.35, y: 3.05, w: 3.2, h: 0.5, margin: 0, fontFace: FONT_H, fontSize: 18, bold: true, color: C.navy });
-      s.addText(a.sub, { x: ax + 0.35, y: 3.45, w: 3.25, h: 0.6, margin: 0, fontFace: FONT_B, fontSize: 13, color: C.muted, lineSpacingMultiple: 1.1 });
+      s.addText(a.big, { x: ax + 0.35, y: 3.05, w: 3.45, h: 0.5, margin: 0, fontFace: FONT_H, fontSize: 16, bold: true, color: C.navy });
+      s.addText(a.sub, { x: ax + 0.35, y: 3.55, w: 3.45, h: 0.6, margin: 0, fontFace: FONT_B, fontSize: 12.5, color: C.muted, lineSpacingMultiple: 1.1 });
       ax += 4.07;
     });
 
@@ -369,8 +369,8 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
       s.addShape(pres.shapes.RECTANGLE, { x: cx, y: cy, w: 5.8, h: 1.55, fill: { color: C.white }, line: { color: C.line, width: 1 }, shadow: shadow() });
       s.addShape(pres.shapes.OVAL, { x: cx + 0.3, y: cy + 0.32, w: 0.9, h: 0.9, fill: { color: C.navy } });
       s.addImage({ data: a.icon, x: cx + 0.51, y: cy + 0.53, w: 0.48, h: 0.48 });
-      s.addText(a.t, { x: cx + 1.45, y: cy + 0.2, w: 4.2, h: 0.45, margin: 0, fontFace: FONT_H, fontSize: 17, bold: true, color: C.navy });
-      s.addText(a.d, { x: cx + 1.45, y: cy + 0.62, w: 4.2, h: 0.85, margin: 0, fontFace: FONT_B, fontSize: 12.5, color: C.ink, lineSpacingMultiple: 1.1 });
+      s.addText(a.t, { x: cx + 1.45, y: cy + 0.2, w: 4.3, h: 0.45, margin: 0, fontFace: FONT_H, fontSize: 15.5, bold: true, color: C.navy });
+      s.addText(a.d, { x: cx + 1.45, y: cy + 0.62, w: 4.3, h: 0.85, margin: 0, fontFace: FONT_B, fontSize: 12, color: C.ink, lineSpacingMultiple: 1.1 });
     });
 
     s.addShape(pres.shapes.RECTANGLE, { x: 0.7, y: 5.6, w: 11.9, h: 1.2, fill: { color: C.navy } });
@@ -379,7 +379,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     s.addText([
       { text: "Автор:  ", options: { bold: true, color: C.gold } },
       { text: "ҚР ПІБ МТҚБ Инженерлік орталығының бас бағдарламашысы, техника ғылымдарының магистрі. ПО әзірлеудің толық циклін басқару тәжірибесі.", options: { color: C.cream } },
-    ], { x: 1.95, y: 5.7, w: 10.4, h: 1.0, margin: 0, fontFace: FONT_B, fontSize: 13.5, valign: "middle", lineSpacingMultiple: 1.1 });
+    ], { x: 1.95, y: 5.7, w: 10.4, h: 1.0, margin: 0, fontFace: FONT_B, fontSize: 12.5, valign: "middle", lineSpacingMultiple: 1.1 });
     pageNum(s, 8);
   }
 
@@ -473,7 +473,7 @@ const shadow = () => ({ type: "outer", color: "000000", blur: 8, offset: 3, angl
     s.addShape(pres.shapes.RECTANGLE, { x: 0.7, y: 4.6, w: 11.93, h: 1.2, fill: { color: C.white }, shadow: shadow() });
     s.addShape(pres.shapes.OVAL, { x: 0.95, y: 4.85, w: 0.65, h: 0.65, fill: { color: C.navy } });
     s.addImage({ data: ic.map, x: 1.09, y: 4.99, w: 0.37, h: 0.37 });
-    s.addText("Келесі маңызды қадам: Интерактивті тарихи карта", { x: 1.85, y: 4.75, w: 6.0, h: 0.5, margin: 0, fontFace: FONT_H, fontSize: 16.5, bold: true, color: C.navy, valign: "middle" });
+    s.addText("Келесі маңызды қадам: Интерактивті тарихи карта", { x: 1.85, y: 4.75, w: 9.5, h: 0.5, margin: 0, fontFace: FONT_H, fontSize: 16.5, bold: true, color: C.navy, valign: "middle" });
     s.addText("Кеңістік пен уақыт синхроны. Таймлайндағы ползунокты жылжыту арқылы картадағы шекаралардың өзгеруін бақылау. Оқиғаны, оның орналасқан жерін және ИИ-тұлғаның пікірін бір жүйеде біріктіру.", { x: 1.85, y: 5.2, w: 9.5, h: 0.6, margin: 0, fontFace: FONT_B, fontSize: 12.5, color: C.ink, valign: "middle", lineSpacingMultiple: 1.1 });
 
     s.addShape(pres.shapes.RECTANGLE, { x: 0.7, y: 6.1, w: 11.93, h: 1.0, fill: { color: C.gold } });
