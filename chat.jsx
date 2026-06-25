@@ -100,6 +100,22 @@ const PROVIDERS = {
 };
 const getActiveProvider = () => PROVIDERS[localStorage.getItem(PROVIDER_STORE)] || PROVIDERS.groq;
 
+// ── Прокси-режим ────────────────────────────────────────────────
+// В проде (не localhost) чат идёт через серверный эндпоинт — ключ на сервере,
+// экран ввода ключа не нужен. Локально остаётся BYOK.
+const CHAT_PROXY_URL = /^(localhost$|127\.|0\.0\.0\.0)/.test(location.hostname) ? '' : '/api/chat';
+const USE_PROXY = !!CHAT_PROXY_URL;
+
+async function proxyStream({ system, messages, onToken, signal }) {
+  const res = await fetch(CHAT_PROXY_URL, {
+    method: 'POST', signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system, messages }),
+  });
+  if (!res.ok) throw new Error(`Сервер қатесі ${res.status}`);
+  return readSSE(res, o => o.choices?.[0]?.delta?.content || '', onToken);
+}
+
 // ── UI ──────────────────────────────────────────────────────────
 function ChatPanel({ item, onClose }) {
   const { useState, useRef, useEffect, useCallback } = React;
@@ -109,7 +125,7 @@ function ChatPanel({ item, onClose }) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [needKey, setNeedKey] = useState(!localStorage.getItem(provider.keyStore));
+  const [needKey, setNeedKey] = useState(USE_PROXY ? false : !localStorage.getItem(provider.keyStore));
   const [keyInput, setKeyInput] = useState('');
   const scrollRef = useRef();
   const abortRef = useRef(null);
@@ -142,8 +158,8 @@ function ChatPanel({ item, onClose }) {
   const send = useCallback(async (text) => {
     const q = (text ?? input).trim();
     if (!q || busy) return;
-    const key = localStorage.getItem(provider.keyStore);
-    if (!key) { setNeedKey(true); return; }
+    const key = USE_PROXY ? null : localStorage.getItem(provider.keyStore);
+    if (!USE_PROXY && !key) { setNeedKey(true); return; }
     setInput('');
     setError('');
     const history = [...messages, { role: 'user', content: q }];
@@ -151,7 +167,8 @@ function ChatPanel({ item, onClose }) {
     setBusy(true);
     abortRef.current = new AbortController();
     try {
-      await provider.stream({
+      const streamFn = USE_PROXY ? proxyStream : provider.stream;
+      await streamFn({
         system: buildPersona(item),
         messages: history,
         key,
@@ -201,7 +218,7 @@ function ChatPanel({ item, onClose }) {
             <div className="chat-title">{item.name}</div>
             <div className="chat-sub">{item.lifeSpan || `${item.start}-${item.end}`} · {provider.label}</div>
           </div>
-          {!needKey && (
+          {!needKey && !USE_PROXY && (
             <button className="chat-prov-chip" onClick={() => setNeedKey(true)} title="Сменить ИИ / ключ">↺ {provider.label}</button>
           )}
           <button className="chat-close" onClick={onClose} aria-label="Закрыть">
