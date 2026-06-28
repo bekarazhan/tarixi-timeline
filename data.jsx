@@ -872,7 +872,11 @@ function refreshUniverseMeta() {
 // Хелперы
 // ============================================================
 
+const CURRENT_YEAR = new Date().getFullYear();
 function itemRange(item) {
+  // «Живые» сущности (без года окончания) тянутся до текущего года динамически,
+  // а не замораживаются конкретным числом при создании.
+  if (item.alive) return [item.start, CURRENT_YEAR];
   return [item.start, item.end ?? item.start];
 }
 

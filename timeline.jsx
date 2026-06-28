@@ -523,7 +523,7 @@ function Timeline({
 
     if (item.kind === 'subject') {
       const w = Math.max(8, x2 - x1);
-      const isAlive = item.lifeSpan && item.lifeSpan.includes('н.в.');
+      const isAlive = item.alive || (item.lifeSpan && item.lifeSpan.includes('н.в.'));
       const stickyOffset = x1 < 0 && x2 > 40 ? Math.max(0, Math.min(-x1, w - 120)) : 0;
       return (
         <div key={item.id}

@@ -99,7 +99,8 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
   const [name,      setName]      = useState(initialItem?.name || '');
   const [start,     setStart]     = useState(initialItem?.start != null ? String(initialItem.start) : '');
   const [end,       setEnd]       = useState(
-    initialItem && initialItem.kind !== 'event' && initialItem.end !== initialItem.start
+    initialItem && initialItem.kind !== 'event' && !initialItem.alive
+      && initialItem.end != null && initialItem.end !== initialItem.start
       ? String(initialItem.end) : ''
   );
   const [selTags,   setSelTags]   = useState(initialItem?.tags || []);
@@ -128,6 +129,7 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
     const s = parseInt(start);
     let e = s;
     let ls = undefined;
+    let alive = false;
 
     if (kind === 'event') {
       e = s;
@@ -136,7 +138,9 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
         e = parseInt(end);
         ls = `${start} — ${end}`;
       } else {
-        e = new Date().getFullYear();
+        // нет года смерти → живой; конец не фиксируем, itemRange тянет до текущего года
+        alive = true;
+        e = undefined;
         ls = `${start} — н.в.`;
       }
     } else if (kind === 'era') {
@@ -145,6 +149,7 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
 
     const common = {
       kind, name: name.trim(), tags: selTags, start: s, end: e,
+      alive,
       universe: universeId,
       lifeSpan: ls,
       desc: desc.trim(),
@@ -704,7 +709,18 @@ function App() {
     // universe is already set by CreateModal; setUniverseId is only a fallback
     const withUniverse = item.universe ? item : window.setUniverseId(item, window.DEFAULT_UNIVERSE?.id || 'main');
     setItems(prev => [...prev, withUniverse]);
-  }, []);
+    // активировать коллекцию объекта, иначе он не будет виден
+    if (withUniverse.universe) {
+      setActiveUniverses(prev => prev.has(withUniverse.universe) ? prev : new Set([...prev, withUniverse.universe]));
+    }
+    // фокус на созданный объект: выбрать и отцентрировать вид
+    setSelected(withUniverse);
+    const [s, e] = window.itemRange(withUniverse);
+    const mid = (s + e) / 2;
+    const range = e - s;
+    const span = range > 0 ? Math.max(40, range * 2.5) : 120;
+    setView(Math.max(-42000, mid - span / 2), Math.min(2500, mid + span / 2));
+  }, [setView]);
 
   const handleUpdate = useCallback((updated) => {
     setItems(prev => prev.map(it => it.id === updated.id ? updated : it));
