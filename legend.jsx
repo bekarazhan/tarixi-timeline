@@ -32,14 +32,14 @@ function LegendTagCreator({ facetId, onAdd }) {
       <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
         <path d="M4.5 1v7M1 4.5h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
-      тег
+      {window.t('addTag')}
     </button>
   );
 
   return (
     <div className="legend-tag-creator">
       <input ref={inputRef} className="legend-tag-input" value={name}
-        onChange={e => setName(e.target.value)} placeholder="Название"
+        onChange={e => setName(e.target.value)} placeholder={window.t('tagNamePlaceholder')}
         onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') reset(); }}
       />
       <div className="legend-tag-palette">
@@ -49,8 +49,8 @@ function LegendTagCreator({ facetId, onAdd }) {
         ))}
       </div>
       <div className="legend-tag-creator-foot">
-        <button className="legend-tag-cancel" onClick={reset}>Отмена</button>
-        <button className="legend-tag-ok" disabled={!name.trim()} onClick={commit}>Создать</button>
+        <button className="legend-tag-cancel" onClick={reset}>{window.t('cancel')}</button>
+        <button className="legend-tag-ok" disabled={!name.trim()} onClick={commit}>{window.t('create')}</button>
       </div>
     </div>
   );
@@ -83,14 +83,14 @@ function Legend({
 
       {/* ── Тип объекта ──────────────────────────────── */}
       <div className="legend-facet">
-        <div className="legend-section-title">Тип объекта</div>
+        <div className="legend-section-title">{window.t('objectType')}</div>
         {['subject', 'event', 'era'].map(k => {
           const m = KIND_META[k];
           const on = activeKinds.has(k);
           return (
             <div key={k} className="legend-item" data-off={!on} onClick={() => onToggleKind(k)}>
               <span className={`legend-swatch kind-${k}`} style={{ '--c': m.color }}></span>
-              <span className="legend-label">{m.label}</span>
+              <span className="legend-label">{window.t('kind.' + k)}</span>
               <span className="legend-count">{kindCounts[k]}</span>
             </div>
           );
@@ -99,7 +99,7 @@ function Legend({
 
       {/* ── Теги ─────────────────────────── */}
       <div className="legend-facet">
-        <div className="legend-section-title">Теги</div>
+        <div className="legend-section-title">{window.t('tags')}</div>
         {domainTags.map(tag => {
           const on = activeTags.has(tag.id);
           return (
@@ -115,7 +115,7 @@ function Legend({
 
       <div className="legend-foot">
         <div className="legend-foot-row">
-          <span>Объектов в базе</span>
+          <span>{window.t('objectsInBase')}</span>
           <span>{items.length}</span>
         </div>
       </div>

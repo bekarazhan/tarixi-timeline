@@ -205,8 +205,8 @@ function ChatPanel({ item, onClose }) {
       else if (e.message === 'BAD_KEY') {
         localStorage.removeItem(provider.keyStore);
         setNeedKey(true);
-        setError('Ключ недействителен — попробуй другой.');
-      } else setError(e.message || 'Не удалось получить ответ');
+        setError(window.t('chatBadKey'));
+      } else setError(e.message || window.t('chatError'));
     } finally {
       setBusy(false);
     }
@@ -216,7 +216,7 @@ function ChatPanel({ item, onClose }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  const suggestions = ['Расскажи о себе', 'Чем ты известен?', 'Какой была твоя эпоха?'];
+  const suggestions = [window.t('chatSug1'), window.t('chatSug2'), window.t('chatSug3')];
 
   const providerPills = (
     <div className="chat-prov">
@@ -235,12 +235,12 @@ function ChatPanel({ item, onClose }) {
           <span className="chat-head-dot"></span>
           <div className="chat-head-body">
             <div className="chat-title">{item.name}</div>
-            <div className="chat-sub">{item.lifeSpan || `${item.start}-${item.end}`} · {provider.label}</div>
+            <div className="chat-sub">{item.lifeSpan || `${item.start}-${item.end}`} · {window.t('chatSubtitle')}</div>
           </div>
           {!needKey && !USE_PROXY && (
             <button className="chat-prov-chip" onClick={() => setNeedKey(true)} title="Сменить ИИ / ключ">↺ {provider.label}</button>
           )}
-          <button className="chat-close" onClick={onClose} aria-label="Закрыть">
+          <button className="chat-close" onClick={onClose} aria-label={window.t('close')}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
@@ -250,7 +250,7 @@ function ChatPanel({ item, onClose }) {
         {needKey ? (
           <div className="chat-key">
             {providerPills}
-            <div className="chat-key-title">Нужен бесплатный ключ {provider.keyName}</div>
+            <div className="chat-key-title">{window.t('chatNeedKey', { prov: provider.keyName })}</div>
             <p className="chat-key-text">
               MVP-режим: ключ хранится только в твоём браузере. Получи бесплатный ключ на{' '}
               <a href={provider.keyUrl} target="_blank" rel="noopener noreferrer">{provider.keyUrl.replace('https://', '')}</a> и вставь сюда.
@@ -259,7 +259,7 @@ function ChatPanel({ item, onClose }) {
               placeholder={provider.keyHint} onChange={e => setKeyInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && saveKey()} />
             <button className="chat-key-btn" onClick={saveKey} disabled={!keyInput.trim()} style={{ background: color }}>
-              Сохранить ключ
+              {window.t('chatSaveKey')}
             </button>
           </div>
         ) : (
@@ -267,7 +267,7 @@ function ChatPanel({ item, onClose }) {
             <div className="chat-body" ref={scrollRef}>
               {messages.length === 0 && (
                 <div className="chat-empty">
-                  <div className="chat-empty-text">Задай вопрос — {firstName} ответит от первого лица.</div>
+                  <div className="chat-empty-text">{window.t('chatEmptyHint', { name: firstName })}</div>
                   <div className="chat-suggest">
                     {suggestions.map(s => (
                       <button key={s} className="chat-suggest-btn" onClick={() => send(s)}>{s}</button>
@@ -284,7 +284,7 @@ function ChatPanel({ item, onClose }) {
             {error && <div className="chat-error">{error}</div>}
             <div className="chat-foot">
               <textarea className="chat-input" rows={1} value={input}
-                placeholder={`Напиши ${firstName}…`}
+                placeholder={window.t('chatWriteTo', { name: firstName })}
                 onChange={e => setInput(e.target.value)} onKeyDown={onKey} disabled={busy} />
               <button className="chat-send" onClick={() => send()} disabled={busy || !input.trim()} style={{ background: color }} aria-label="Отправить">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

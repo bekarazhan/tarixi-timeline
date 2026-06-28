@@ -2955,3 +2955,9 @@ button { font-family: inherit; }
 .chat-prov-pill.on { background: var(--bg-1, #11151c); }
 .chat-prov-chip { background: var(--bg-3, #1c2530); border: 1px solid var(--line, #1f2731); color: var(--text-3, #6b7682); font-size: 11px; padding: 4px 8px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .chat-prov-chip:hover { color: var(--text-0, #eef2f6); }
+
+/* переключатель языка в шапке */
+.lang-switch { display: flex; gap: 2px; margin-left: 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+.lang-btn { background: none; border: none; color: var(--text-3); font: 600 11px var(--font-ui); padding: 3px 7px; border-radius: 6px; cursor: pointer; letter-spacing: 0.02em; }
+.lang-btn:hover { color: var(--text-1); }
+.lang-btn.on { background: var(--bg-3); color: var(--text-0); }

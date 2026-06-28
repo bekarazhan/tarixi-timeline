@@ -33,7 +33,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
   })();
 
   const contemps = window.findContemporaries(cur, allItems, 10);
-  const region = window.itemRegion(cur) === 'kz' ? 'Казахстан' : 'Мир';
+  const region = window.itemRegion(cur) === 'kz' ? window.t('regionKz') : window.t('regionWorld');
 
   const [s, e] = window.itemRange(cur);
   const facts = isSubject
@@ -45,7 +45,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
 
   return (
     <aside className="detail" data-open={open} aria-hidden={!open}>
-      <button className="detail-close" onClick={onClose} aria-label="Закрыть">
+      <button className="detail-close" onClick={onClose} aria-label={window.t('close')}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5"/>
         </svg>
@@ -64,21 +64,21 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
         </div>
         <h2 className="detail-title">{title}</h2>
         <div className="detail-meta">
-          <div><span style={{ color: 'var(--text-3)' }}>{isSubject ? 'Годы жизни' : isEra ? 'Период' : 'Год'}</span>{' '}<span className="val">{yrs}</span></div>
+          <div><span style={{ color: 'var(--text-3)' }}>{isSubject ? window.t('lifeYears') : isEra ? window.t('periodLabel') : window.t('yearLabel')}</span>{' '}<span className="val">{yrs}</span></div>
           {isEra && (
-            <div><span style={{ color: 'var(--text-3)' }}>Длительность</span>{' '}<span className="val">{Math.abs(e - s)} лет</span></div>
+            <div><span style={{ color: 'var(--text-3)' }}>{window.t('duration')}</span>{' '}<span className="val">{Math.abs(e - s)} {window.t('yearsUnit')}</span></div>
           )}
         </div>
       </div>
 
       <div className="detail-body" style={{ '--c': color }}>
         <section>
-          <div className="detail-section-title">Описание</div>
+          <div className="detail-section-title">{window.t('description')}</div>
           <p className="detail-desc">{cur.desc}</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             {onChat && canChat && (
               <button className="detail-cta" style={{ background: color }} onClick={() => onChat(cur)}>
-                Поговорить
+                {window.t('talk')}
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                   <path d="M2 3.5A1.5 1.5 0 013.5 2h7A1.5 1.5 0 0112 3.5v5A1.5 1.5 0 0110.5 10H6l-3 2.5V10H3.5A1.5 1.5 0 012 8.5v-5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
                 </svg>
@@ -86,7 +86,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
             )}
             {onEdit && (
               <button className="detail-cta ghost" onClick={() => onEdit(cur)}>
-                Редактировать
+                {window.t('edit')}
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                   <path d="M8.5 1.5l2 2-6 6H2.5v-2l6-6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
                 </svg>
@@ -97,7 +97,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
 
         {facts.length > 0 && (
           <section>
-            <div className="detail-section-title">При его жизни</div>
+            <div className="detail-section-title">{window.t('duringLife')}</div>
             <div className="detail-facts">
               {facts.map(f => (
                 <div className="detail-fact" key={f.id} onClick={() => onSelect(f)} style={{ cursor: 'pointer' }}>
@@ -110,9 +110,9 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
         )}
 
         <section>
-          <div className="detail-section-title">Современники</div>
+          <div className="detail-section-title">{window.t('contemporaries')}</div>
           {contemps.length === 0 && (
-            <div className="detail-empty">Никто не пересекается по годам в нашем датасете</div>
+            <div className="detail-empty">{window.t('noContemporaries')}</div>
           )}
           <div className="detail-contemps">
             {contemps.map(c => {
@@ -123,7 +123,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
                   <div className="detail-contemp-body">
                     <div className="detail-contemp-name">{c.name}</div>
                     <div className="detail-contemp-meta">
-                      {window.itemRegion(c) === 'kz' ? 'Казахстан' : 'Мир'} · {pt?.name || ''}
+                      {window.itemRegion(c) === 'kz' ? window.t('regionKz') : window.t('regionWorld')} · {pt?.name || ''}
                     </div>
                   </div>
                   <div className="detail-contemp-yr">{c.lifeSpan || ''}</div>

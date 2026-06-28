@@ -22,17 +22,17 @@ const FACETS = {
 
 const TAG_CATALOG = [
   // Тематика
-  { id: 'politics', name: 'Политика',    facet: 'domain', color: '#e6b94a' },
-  { id: 'war',      name: 'Войны',       facet: 'domain', color: '#ef5a6a' },
-  { id: 'science',  name: 'Наука',       facet: 'domain', color: '#5cd4ec' },
-  { id: 'culture',  name: 'Культура',    facet: 'domain', color: '#b27cff' },
-  { id: 'religion', name: 'Религия',     facet: 'domain', color: '#f7903a' },
+  { id: 'politics', name: 'Саясат',      facet: 'domain', color: '#e6b94a' },
+  { id: 'war',      name: 'Соғыстар',    facet: 'domain', color: '#ef5a6a' },
+  { id: 'science',  name: 'Ғылым',       facet: 'domain', color: '#5cd4ec' },
+  { id: 'culture',  name: 'Мәдениет',    facet: 'domain', color: '#b27cff' },
+  { id: 'religion', name: 'Дін',         facet: 'domain', color: '#f7903a' },
   { id: 'economy',  name: 'Экономика',   facet: 'domain', color: '#9fe07b' },
   // Тип субъекта
-  { id: 'person',   name: 'Человек',     facet: 'domain', color: '#94aec8' },
-  { id: 'people',   name: 'Народность',  facet: 'domain', color: '#7aaa8a' },
-  { id: 'state',    name: 'Государство', facet: 'domain', color: '#b09060' },
-  { id: 'city',     name: 'Город',       facet: 'domain', color: '#b07878' },
+  { id: 'person',   name: 'Тұлға',       facet: 'domain', color: '#94aec8' },
+  { id: 'people',   name: 'Халық',       facet: 'domain', color: '#7aaa8a' },
+  { id: 'state',    name: 'Мемлекет',    facet: 'domain', color: '#b09060' },
+  { id: 'city',     name: 'Қала',        facet: 'domain', color: '#b07878' },
 ];
 
 const TAG_MAP = Object.fromEntries(TAG_CATALOG.map(t => [t.id, t]));

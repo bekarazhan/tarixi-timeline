@@ -487,8 +487,8 @@ function UniverseSelector({ activeUniverses, onToggle, items, universes, onCreat
   const btnLabel = activeList.length === 1
     ? activeList[0].name
     : activeList.length > 1
-      ? `${activeList.length} коллекции`
-      : 'История';
+      ? `${activeList.length} ${window.t('collectionsN')}`
+      : window.t('allHistory');
 
   return (
     <div className="universe-selector">
@@ -615,6 +615,8 @@ function VibeChip({ name, dots }) {
 function App() {
   const [t, setTweak] = window.useTweaks(window.TWEAK_DEFAULTS || TWEAK_DEFAULTS);
   const [selected, setSelected] = useState(null);
+  const [lang, setLangState] = useState(window.LANG || 'kz');
+  const changeLang = (l) => { window.setLang(l); setLangState(l); };
   const [activeTags, setActiveTags] = useState(() =>
     new Set(window.TAG_CATALOG.map(t => t.id))
   );
@@ -783,7 +785,7 @@ function App() {
       <header className="header">
         <div className="brand">
           <div className="brand-mark"></div>
-          <div className="brand-name">TarixiTimeline <span>· навигатор истории</span></div>
+          <div className="brand-name">TarixiTimeline <span>· {window.t('brandTagline')}</span></div>
         </div>
 
         <UniverseSelector
@@ -805,8 +807,14 @@ function App() {
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
             <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
-          Добавить
+          {window.t('add')}
         </button>
+
+        <div className="lang-switch">
+          {window.LANGS.map(l => (
+            <button key={l} className={`lang-btn${lang === l ? ' on' : ''}`} onClick={() => changeLang(l)}>{l.toUpperCase()}</button>
+          ))}
+        </div>
       </header>
 
       {createOpen && (
