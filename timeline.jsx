@@ -340,9 +340,9 @@ function Timeline({
       setView(ns, ne);
       return;
     }
-    // vertical scroll - fix direction: wheel down should scroll down (increase scrollY)
+    // vertical scroll — нативная семантика (как scrollTop): колесо вниз → контент вверх
     setScrollY(s => {
-      const newScrollY = s + e.deltaY;
+      const newScrollY = s - e.deltaY;
       // Clamp to boundaries with soft bounce effect
       return Math.max(scrollMinLimit, Math.min(scrollMaxLimit, newScrollY));
     });
