@@ -20,6 +20,9 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
 
   const isSubject = cur.kind === 'subject';
   const isEra = cur.kind === 'era';
+  // Кнопка чата: явный флаг chat, либо (для сид-фигур без флага) — участник с тегом «человек»
+  const canChat = cur.chat === true ||
+    (cur.chat === undefined && isSubject && (cur.tags || []).includes('person'));
 
   const title = cur.name;
   const yrs = (() => {
@@ -73,7 +76,7 @@ function DetailPanel({ item, onClose, onSelect, onEdit, onChat, allItems }) {
           <div className="detail-section-title">Описание</div>
           <p className="detail-desc">{cur.desc}</p>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            {onChat && isSubject && (
+            {onChat && canChat && (
               <button className="detail-cta" style={{ background: color }} onClick={() => onChat(cur)}>
                 Поговорить
                 <svg width="13" height="13" viewBox="0 0 14 14" fill="none">

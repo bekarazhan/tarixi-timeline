@@ -801,6 +801,9 @@ button { font-family: inherit; }
 }
 .cm-input:focus, .cm-textarea:focus { border-color: var(--text-3); }
 .cm-textarea { resize: vertical; }
+.cm-textarea-lg { min-height: 120px; }
+.cm-toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; font-size: 13px; color: var(--text-1); }
+.cm-toggle input { width: 16px; height: 16px; accent-color: var(--accent, #f0e9d8); cursor: pointer; flex-shrink: 0; }
 .cm-seg {
   display: flex; background: var(--bg-2);
   border: 1px solid var(--line-strong);

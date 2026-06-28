@@ -30,7 +30,7 @@ export async function onRequestPost(context) {
     temperature: 0.9,
     max_tokens: 600,
     messages: [
-      { role: "system", content: String(system || "").slice(0, 4000) },
+      { role: "system", content: String(system || "").slice(0, 12000) },
       ...safeMessages,
     ],
   };

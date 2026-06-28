@@ -109,6 +109,11 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
   const selectableUniverses = (universes || []).filter(u => u.id !== 'kz' && u.id !== 'world');
   const [desc,    setDesc]    = useState(initialItem?.desc     || '');
   const [photoUrl, setPhotoUrl] = useState(initialItem?.photoUrl || '');
+  const [chatEnabled, setChatEnabled] = useState(
+    initialItem?.chat ?? (initialItem?.kind === 'subject' && (initialItem?.tags || []).includes('person'))
+  );
+  // grounded=true → кастомная личность (ЖИ отвечает только по описанию); из вики/сид → знания модели
+  const [fromWiki, setFromWiki] = useState(initialItem ? initialItem.grounded !== true : false);
 
   const [wikiQuery, setWikiQuery] = useState('');
   const [wikiResults, setWikiResults] = useState([]);
@@ -144,6 +149,8 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
       lifeSpan: ls,
       desc: desc.trim(),
       photoUrl: photoUrl.trim() || undefined,
+      chat: chatEnabled,
+      grounded: !fromWiki, // кастомный (не из вики) → отвечать только по описанию
     };
     if (isEdit) {
       onUpdate({ ...initialItem, ...common });
@@ -235,6 +242,8 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
       setName(page.title);
       setDesc(extract.length > 500 ? extract.slice(0, 500) + '...' : extract);
       if (photo) setPhotoUrl(photo);
+      setFromWiki(true);     // личность из Википедии → ЖИ опирается на знания модели
+      setChatEnabled(true);  // историческим личностям чат включаем по умолчанию
 
       let inferredKind = 'event';
       let startYear = '';
@@ -418,13 +427,26 @@ function CreateModal({ onClose, onSave, onUpdate, initialItem, allTags, onAddTag
           </div>
 
           <div className="cm-field">
-            <label className="cm-label">Описание <span className="cm-hint">— необязательно</span></label>
-            <textarea className="cm-textarea" value={desc} onChange={e => setDesc(e.target.value)} rows={3} placeholder="Краткое описание события…"/>
+            <label className="cm-label">Описание <span className="cm-hint">— для ЖИ-чата это единственный источник о личности</span></label>
+            <textarea className="cm-textarea cm-textarea-lg" value={desc} onChange={e => setDesc(e.target.value)} rows={6} placeholder="Подробное описание. Для кастомной личности впишите всё, что персонаж должен знать о себе: характер, биографию, факты…"/>
           </div>
 
           <div className="cm-field">
             <label className="cm-label">Фото <span className="cm-hint">— URL изображения</span></label>
             <input className="cm-input" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://…"/>
+          </div>
+
+          <div className="cm-field">
+            <label className="cm-toggle">
+              <input type="checkbox" checked={chatEnabled} onChange={e => setChatEnabled(e.target.checked)} />
+              <span>Кнопка «Поговорить» — ЖИ-чат с этой личностью</span>
+            </label>
+            {chatEnabled && !fromWiki && (
+              <div className="cm-hint" style={{ marginTop: 5 }}>Кастомная личность: ЖИ отвечает только по тексту описания выше, без выдумок.</div>
+            )}
+            {chatEnabled && fromWiki && (
+              <div className="cm-hint" style={{ marginTop: 5 }}>Историческая личность: ЖИ опирается на свои знания + описание.</div>
+            )}
           </div>
         </div>
 
